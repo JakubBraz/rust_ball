@@ -13,7 +13,9 @@ pub struct GamePhysics {
     multi_body_joint_set: MultibodyJointSet,
     ccd_solver: CCDSolver,
     query_pipeline: QueryPipeline,
-    ball_handle: RigidBodyHandle
+    player_handle: RigidBodyHandle,
+    ball_handle: RigidBodyHandle,
+    wall_handlers: Vec<ColliderHandle>
 }
 
 impl GamePhysics {
@@ -22,7 +24,8 @@ impl GamePhysics {
             physics_pipeline: Default::default(),
             rigid_body_set: Default::default(),
             collider_set: Default::default(),
-            gravity: vector![0.0, -9.81],
+            // gravity: vector![0.0, -9.81],
+            gravity: vector![0.0, 0.0],
             integration_parameters: Default::default(),
             island_manager: Default::default(),
             broad_phase: Default::default(),
@@ -31,27 +34,76 @@ impl GamePhysics {
             multi_body_joint_set: Default::default(),
             ccd_solver: Default::default(),
             query_pipeline: Default::default(),
+            player_handle: Default::default(),
             ball_handle: Default::default(),
+            wall_handlers: vec![],
         };
 
         /* Create the ground. */
-        let collider = ColliderBuilder::cuboid(100.0, 0.1).build();
-        gp.collider_set.insert(collider);
+        let wall = ColliderBuilder::cuboid(15.0, 0.5)
+            .restitution(0.7)
+            .translation(vector![20.0, 0.0])
+            .build();
+        let handler = gp.collider_set.insert(wall);
+        gp.wall_handlers.push(handler);
+
+        let wall = ColliderBuilder::cuboid(15.0, 0.5)
+            .restitution(0.7)
+            .translation(vector![20.0, 30.0])
+            .build();
+        let handler = gp.collider_set.insert(wall);
+        gp.wall_handlers.push(handler);
+
+        let wall = ColliderBuilder::cuboid(0.5, 15.0)
+            .restitution(0.7)
+            .translation(vector![5.0, 15.0])
+            .build();
+        let handler = gp.collider_set.insert(wall);
+        gp.wall_handlers.push(handler);
+
+        let wall = ColliderBuilder::cuboid(0.5, 15.0)
+            .restitution(0.7)
+            .translation(vector![35.0, 15.0])
+            .build();
+        let handler = gp.collider_set.insert(wall);
+        gp.wall_handlers.push(handler);
 
         /* Create the bouncing ball. */
         let rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![10.0, 10.0])
+            .translation(vector![20.0, 10.0])
             .build();
         // let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-        let collider = ColliderBuilder::ball(0.5).restitution(1.5).build();
+        let collider = ColliderBuilder::ball(0.5)
+            .restitution(0.7)
+            .build();
         let ball_body_handle = gp.rigid_body_set.insert(rigid_body);
         gp.collider_set.insert_with_parent(collider, ball_body_handle, &mut gp.rigid_body_set);
-        gp.ball_handle = ball_body_handle;
+        gp.player_handle = ball_body_handle;
+
+        let rigid_body = RigidBodyBuilder::dynamic()
+            .translation(vector![10.0, 10.0])
+            .build();
+        let collider = ColliderBuilder::ball(0.25)
+            .restitution(0.7)
+            .build();
+        let ball_handle = gp.rigid_body_set.insert(rigid_body);
+        gp.collider_set.insert_with_parent(collider, ball_handle, &mut gp.rigid_body_set);
+        gp.ball_handle = ball_handle;
 
         gp
     }
 
     pub fn step(&mut self) {
+        let mut b = &mut self.rigid_body_set[self.player_handle];
+        b.reset_forces(true);
+        let v = b.linvel();
+        b.add_force(vector![-v.x, -v.y], true);
+
+        let mut ball = &mut self.rigid_body_set[self.ball_handle];
+        ball.reset_forces(true);
+        let v = ball.linvel();
+        ball.add_force(vector![-v.x * 0.2, -v.y * 0.2], true);
+
         self.physics_pipeline.step(
             &self.gravity,
             &self.integration_parameters,
@@ -69,64 +121,26 @@ impl GamePhysics {
         );
     }
 
-    pub fn ball(&self) -> (f32, f32) {
-        let ball_body = &self.rigid_body_set[self.ball_handle];
-        (ball_body.translation().x, ball_body.translation().y)
+    pub fn player(&self) -> (f32, f32, f32, f32, f32, f32) {
+        let ball_body = &self.rigid_body_set[self.player_handle];
+        let player_handle = ball_body.colliders().first().unwrap().0;
+        let player_radius = &self.collider_set[player_handle].shape().as_ball().unwrap().radius;
+        let ball = &self.rigid_body_set[self.ball_handle];
+        let ball_pos = ball.translation();
+        let ball_radius = &self.collider_set[ball.colliders().first().unwrap().0].shape().as_ball().unwrap().radius;
+
+        (ball_body.translation().x, ball_body.translation().y, *player_radius, ball_pos.x, ball_pos.y, *ball_radius)
     }
-}
 
-fn main() {
-    let mut rigid_body_set = RigidBodySet::new();
-    let mut collider_set = ColliderSet::new();
+    pub fn apply_force(&mut self, x: f32, y: f32) {
+        &self.rigid_body_set[self.player_handle].apply_impulse(vector![x, y], true);
+    }
 
-    /* Create the ground. */
-    let collider = ColliderBuilder::cuboid(100.0, 0.1).build();
-    collider_set.insert(collider);
-
-    /* Create the bouncing ball. */
-    let rigid_body = RigidBodyBuilder::dynamic()
-        .translation(vector![0.0, 10.0])
-        .build();
-    let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-    let ball_body_handle = rigid_body_set.insert(rigid_body);
-    collider_set.insert_with_parent(collider, ball_body_handle, &mut rigid_body_set);
-
-    /* Create other structures necessary for the simulation. */
-    let gravity = vector![0.0, -9.81];
-    let integration_parameters = IntegrationParameters::default();
-    let mut physics_pipeline = PhysicsPipeline::new();
-    let mut island_manager = IslandManager::new();
-    let mut broad_phase = DefaultBroadPhase::new();
-    let mut narrow_phase = NarrowPhase::new();
-    let mut impulse_joint_set = ImpulseJointSet::new();
-    let mut multibody_joint_set = MultibodyJointSet::new();
-    let mut ccd_solver = CCDSolver::new();
-    let mut query_pipeline = QueryPipeline::new();
-    let physics_hooks = ();
-    let event_handler = ();
-
-    /* Run the game loop, stepping the simulation once per frame. */
-    for _ in 0..200 {
-        physics_pipeline.step(
-            &gravity,
-            &integration_parameters,
-            &mut island_manager,
-            &mut broad_phase,
-            &mut narrow_phase,
-            &mut rigid_body_set,
-            &mut collider_set,
-            &mut impulse_joint_set,
-            &mut multibody_joint_set,
-            &mut ccd_solver,
-            Some(&mut query_pipeline),
-            &physics_hooks,
-            &event_handler,
-        );
-
-        let ball_body = &rigid_body_set[ball_body_handle];
-        println!(
-            "Ball altitude: {}",
-            ball_body.translation().y
-        );
+    pub fn static_bodies(&self) -> Vec<(f32, f32, f32, f32)> {
+        self.wall_handlers.iter().map(|x| {
+            let s = self.collider_set[*x].shape().as_cuboid().unwrap().half_extents;
+            let t = self.collider_set[*x].translation();
+            (-s.x + t.x, -s.y + t.y, s.x * 2.0, s.y * 2.0)
+        } ).collect()
     }
 }
