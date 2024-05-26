@@ -15,7 +15,7 @@ pub struct GamePhysics {
     query_pipeline: QueryPipeline,
     player_handle: RigidBodyHandle,
     ball_handle: RigidBodyHandle,
-    wall_handlers: Vec<ColliderHandle>
+    wall_handlers: Vec<ColliderHandle>,
 }
 
 impl GamePhysics {
@@ -73,21 +73,19 @@ impl GamePhysics {
             .translation(vector![20.0, 10.0])
             .build();
         // let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-        let collider = ColliderBuilder::ball(0.5)
-            .restitution(0.7)
-            .build();
+        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
         let ball_body_handle = gp.rigid_body_set.insert(rigid_body);
-        gp.collider_set.insert_with_parent(collider, ball_body_handle, &mut gp.rigid_body_set);
+        gp.collider_set
+            .insert_with_parent(collider, ball_body_handle, &mut gp.rigid_body_set);
         gp.player_handle = ball_body_handle;
 
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![10.0, 10.0])
             .build();
-        let collider = ColliderBuilder::ball(0.25)
-            .restitution(0.7)
-            .build();
+        let collider = ColliderBuilder::ball(0.25).restitution(0.7).build();
         let ball_handle = gp.rigid_body_set.insert(rigid_body);
-        gp.collider_set.insert_with_parent(collider, ball_handle, &mut gp.rigid_body_set);
+        gp.collider_set
+            .insert_with_parent(collider, ball_handle, &mut gp.rigid_body_set);
         gp.ball_handle = ball_handle;
 
         gp
@@ -117,19 +115,34 @@ impl GamePhysics {
             &mut self.ccd_solver,
             Some(&mut self.query_pipeline),
             &(),
-            &()
+            &(),
         );
     }
 
     pub fn player(&self) -> (f32, f32, f32, f32, f32, f32) {
         let ball_body = &self.rigid_body_set[self.player_handle];
         let player_handle = ball_body.colliders().first().unwrap().0;
-        let player_radius = &self.collider_set[player_handle].shape().as_ball().unwrap().radius;
+        let player_radius = &self.collider_set[player_handle]
+            .shape()
+            .as_ball()
+            .unwrap()
+            .radius;
         let ball = &self.rigid_body_set[self.ball_handle];
         let ball_pos = ball.translation();
-        let ball_radius = &self.collider_set[ball.colliders().first().unwrap().0].shape().as_ball().unwrap().radius;
+        let ball_radius = &self.collider_set[ball.colliders().first().unwrap().0]
+            .shape()
+            .as_ball()
+            .unwrap()
+            .radius;
 
-        (ball_body.translation().x, ball_body.translation().y, *player_radius, ball_pos.x, ball_pos.y, *ball_radius)
+        (
+            ball_body.translation().x,
+            ball_body.translation().y,
+            *player_radius,
+            ball_pos.x,
+            ball_pos.y,
+            *ball_radius,
+        )
     }
 
     pub fn apply_force(&mut self, x: f32, y: f32) {
@@ -137,10 +150,17 @@ impl GamePhysics {
     }
 
     pub fn static_bodies(&self) -> Vec<(f32, f32, f32, f32)> {
-        self.wall_handlers.iter().map(|x| {
-            let s = self.collider_set[*x].shape().as_cuboid().unwrap().half_extents;
-            let t = self.collider_set[*x].translation();
-            (-s.x + t.x, -s.y + t.y, s.x * 2.0, s.y * 2.0)
-        } ).collect()
+        self.wall_handlers
+            .iter()
+            .map(|x| {
+                let s = self.collider_set[*x]
+                    .shape()
+                    .as_cuboid()
+                    .unwrap()
+                    .half_extents;
+                let t = self.collider_set[*x].translation();
+                (-s.x + t.x, -s.y + t.y, s.x * 2.0, s.y * 2.0)
+            })
+            .collect()
     }
 }

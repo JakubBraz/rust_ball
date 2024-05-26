@@ -4,7 +4,7 @@ pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
 
-pub fn f2(a: u32, b: u32) -> u32{
+pub fn f2(a: u32, b: u32) -> u32 {
     a * b
 }
 
