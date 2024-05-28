@@ -1,4 +1,9 @@
+use std::f32::consts::PI;
+use rapier2d::na::Rotation2;
 use rapier2d::prelude::*;
+
+const PLAYER_SPEED: f32 = 10.0;
+const PLAYER_ACC: f32 = 2.0;
 
 pub struct GamePhysics {
     physics_pipeline: PhysicsPipeline,
@@ -14,8 +19,11 @@ pub struct GamePhysics {
     ccd_solver: CCDSolver,
     query_pipeline: QueryPipeline,
     player_handle: RigidBodyHandle,
+    player2_handle: RigidBodyHandle,
     ball_handle: RigidBodyHandle,
     wall_handlers: Vec<ColliderHandle>,
+
+    active_forces: [bool; 4],
 }
 
 impl GamePhysics {
@@ -35,8 +43,10 @@ impl GamePhysics {
             ccd_solver: Default::default(),
             query_pipeline: Default::default(),
             player_handle: Default::default(),
+            player2_handle: Default::default(),
             ball_handle: Default::default(),
             wall_handlers: vec![],
+            active_forces: [false, false, false, false],
         };
 
         /* Create the ground. */
@@ -68,11 +78,11 @@ impl GamePhysics {
         let handler = gp.collider_set.insert(wall);
         gp.wall_handlers.push(handler);
 
-        /* Create the bouncing ball. */
+        // create player
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![20.0, 10.0])
+            .linear_damping(1.0)
             .build();
-        // let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
         let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
         let ball_body_handle = gp.rigid_body_set.insert(rigid_body);
         gp.collider_set
@@ -80,7 +90,19 @@ impl GamePhysics {
         gp.player_handle = ball_body_handle;
 
         let rigid_body = RigidBodyBuilder::dynamic()
+            .translation(vector![30.0, 25.0])
+            .linear_damping(1.0)
+            .build();
+        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
+        let player2_handle = gp.rigid_body_set.insert(rigid_body);
+        gp.collider_set
+            .insert_with_parent(collider, player2_handle, &mut gp.rigid_body_set);
+        gp.player2_handle = player2_handle;
+
+        // create ball
+        let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![10.0, 10.0])
+            .linear_damping(1.0)
             .build();
         let collider = ColliderBuilder::ball(0.25).restitution(0.7).build();
         let ball_handle = gp.rigid_body_set.insert(rigid_body);
@@ -92,15 +114,25 @@ impl GamePhysics {
     }
 
     pub fn step(&mut self) {
-        let mut b = &mut self.rigid_body_set[self.player_handle];
-        b.reset_forces(true);
-        let v = b.linvel();
-        b.add_force(vector![-v.x, -v.y], true);
+        let mut player2 = &mut self.rigid_body_set[self.player2_handle];
+        println!("{:?} {:?}", self.active_forces, player2.user_force());
+        // println!("VEL: {}", player2.linvel());
+        println!("{}", player2.linvel().norm());
 
-        let mut ball = &mut self.rigid_body_set[self.ball_handle];
-        ball.reset_forces(true);
-        let v = ball.linvel();
-        ball.add_force(vector![-v.x * 0.2, -v.y * 0.2], true);
+        player2.reset_forces(true);
+        let force_vector = vector![0.0, PLAYER_SPEED];
+        let force = match self.active_forces {
+            [false, true, false, false] => force_vector,
+            [false, true, true, false] => Rotation2::new(PI * 0.25) * force_vector,
+            [false, false, true, false] => Rotation2::new(PI * 0.5) * force_vector,
+            [true, false, true, false] => Rotation2::new(PI * 0.75) * force_vector,
+            [true, false, false, false] => Rotation2::new(PI) * force_vector,
+            [true, false, false, true] => Rotation2::new(PI * 1.25) * force_vector,
+            [false, false, false, true] => Rotation2::new(PI * 1.5) * force_vector,
+            [false, true, false, true] => Rotation2::new(PI * 1.75) * force_vector,
+            _ => vector![0.0, 0.0]
+        };
+        player2.add_force(force, true);
 
         self.physics_pipeline.step(
             &self.gravity,
@@ -145,8 +177,34 @@ impl GamePhysics {
         )
     }
 
-    pub fn apply_force(&mut self, x: f32, y: f32) {
+    pub fn player2(&self) -> (f32, f32, f32) {
+        let p = &self.rigid_body_set[self.player2_handle];
+        let collider_handle = p.colliders().first().unwrap().0;
+        let radius = &self.collider_set[collider_handle].shape().as_ball().unwrap().radius;
+        (p.translation().x, p.translation().y, *radius)
+    }
+
+    pub fn apply_impulse(&mut self, x: f32, y: f32) {
         &self.rigid_body_set[self.player_handle].apply_impulse(vector![x, y], true);
+    }
+
+    pub fn move_player(&mut self, x: f32, y: f32) {
+        // self.rigid_body_set[self.player2_handle].user_force().x = 0.0;
+        // self.rigid_body_set[self.player2_handle].user_force().y = -10.0;
+        // self.rigid_body_set[self.player2_handle].reset_forces(true);
+        self.rigid_body_set[self.player2_handle].add_force(vector![x, y], true);
+        // self.rigid_body_set[self.player2_handle].set_linvel (vector![x, y], true);
+
+        // self.active_forces[dir] = force;
+    }
+
+    pub fn stop_force(&mut self) {
+        self.rigid_body_set[self.player2_handle].reset_forces(true);
+        // self.rigid_body_set[self.player2_handle].set_linvel (vector![0.0, 0.0], true);
+    }
+
+    pub fn player_input(&mut self, keys: [bool; 4]) {
+        self.active_forces = keys;
     }
 
     pub fn static_bodies(&self) -> Vec<(f32, f32, f32, f32)> {

@@ -1,22 +1,11 @@
 use game_logic::physics::GamePhysics;
-use macroquad::input::KeyCode::{Down, Escape, Left, Right, Up, W};
+use macroquad::input::KeyCode::{A, D, Down, Escape, Left, Right, S, Up, W};
 use macroquad::prelude::*;
 use rapier2d::prelude::Vector;
 use std::process::exit;
 
 const SCALING: f32 = 20.0;
-
-#[derive(Debug)]
-struct S {
-    x: u32,
-    y: u32,
-}
-
-#[derive(Debug)]
-struct ComplexStruct {
-    val: i32,
-    v: Vec<u32>,
-}
+const SPEED: f32 = 10.0;
 
 #[macroquad::main("BasicShapes")]
 async fn main() {
@@ -26,35 +15,62 @@ async fn main() {
     println!("{:?}", game_logic::f2(30, 3));
     // println!("{:?}", game_logic::physics::diff(30, 3));
 
-    let mut a = S { x: 13, y: 19 };
-    println!("{:?}", a);
-    a.x = 12;
-    println!("{:?}", a);
-
-    let mut st = ComplexStruct {
-        val: 10,
-        v: vec![1, 2, 3],
-    };
-    println!("{:?}", st);
-    st.v.push(12);
-    println!("{:?}", st);
-
     let mut s = GamePhysics::init();
 
     println!("{:?}", s.player());
 
     loop {
         if is_key_pressed(Up) {
-            s.apply_force(0.0, -10.0);
-        } else if is_key_pressed(Down) {
-            s.apply_force(0.0, 10.0);
-        } else if is_key_pressed(Left) {
-            s.apply_force(-10.0, 0.0);
-        } else if is_key_pressed(Right) {
-            s.apply_force(10.0, 0.0);
-        } else if is_key_pressed(Escape) {
+            s.apply_impulse(0.0, -10.0);
+        }
+        if is_key_pressed(Down) {
+            s.apply_impulse(0.0, 10.0);
+        }
+        if is_key_pressed(Left) {
+            s.apply_impulse(-10.0, 0.0);
+        }
+        if is_key_pressed(Right) {
+            s.apply_impulse(10.0, 0.0);
+        }
+        // if is_key_pressed(W) {
+        //     s.move_player(0.0, -SPEED);
+        // }
+        // if is_key_pressed(S) {
+        //     s.move_player(0.0, SPEED);
+        // }
+        // if is_key_pressed(A) {
+        //     s.move_player(-SPEED, 0.0);
+        // }
+        // if is_key_pressed(D) {
+        //     s.move_player(SPEED, 0.0);
+        // }
+        // if is_key_released(W) {
+        //     s.move_player(0.0, SPEED);
+        // }
+        // if is_key_released(S) {
+        //     s.move_player(0.0, -SPEED);
+        // }
+        // if is_key_released(A) {
+        //     s.move_player(SPEED, 0.0);
+        // }
+        // if is_key_released(D) {
+        //     s.move_player(-SPEED, 0.0);
+        // }
+
+        s.player_input([
+            get_keys_down().contains(&W),
+            get_keys_down().contains(&S),
+            get_keys_down().contains(&A),
+            get_keys_down().contains(&D)
+        ]);
+
+        if is_key_pressed(Escape) {
             exit(0);
         }
+
+        // if get_keys_down().is_empty() {
+        //     s.stop_force();
+        // }
 
         s.step();
         clear_background(Color::from_hex(0x_00_99_00));
@@ -75,6 +91,9 @@ async fn main() {
             ball_radius * SCALING,
             WHITE,
         );
+
+        let (p2x, p2y, p2r) = s.player2();
+        draw_circle(p2x * SCALING, p2y * SCALING, p2r * SCALING, Color::from_hex(0x_77_77_77));
 
         let walls = s.static_bodies();
         for (x, y, w, h) in walls {
