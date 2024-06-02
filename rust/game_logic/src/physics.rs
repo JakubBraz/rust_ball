@@ -4,6 +4,8 @@ use rapier2d::prelude::*;
 
 const PLAYER_SPEED: f32 = 10.0;
 const PLAYER_ACC: f32 = 2.0;
+const MAX_VEC: f32 = 5.0;
+const BALL_IMPACT: f32 = 5.0;
 
 pub struct GamePhysics {
     physics_pipeline: PhysicsPipeline,
@@ -20,10 +22,14 @@ pub struct GamePhysics {
     query_pipeline: QueryPipeline,
     player_handle: RigidBodyHandle,
     player2_handle: RigidBodyHandle,
+    player3_handle: RigidBodyHandle,
     ball_handle: RigidBodyHandle,
     wall_handlers: Vec<ColliderHandle>,
+    player_collider_handle: ColliderHandle,
+    ball_collider_handle: ColliderHandle,
 
     active_forces: [bool; 4],
+    touch_vector: Vector<f32>,
 }
 
 impl GamePhysics {
@@ -44,9 +50,13 @@ impl GamePhysics {
             query_pipeline: Default::default(),
             player_handle: Default::default(),
             player2_handle: Default::default(),
+            player3_handle: Default::default(),
             ball_handle: Default::default(),
             wall_handlers: vec![],
+            player_collider_handle: Default::default(),
+            ball_collider_handle: Default::default(),
             active_forces: [false, false, false, false],
+            touch_vector: vector![0.0, 0.0],
         };
 
         /* Create the ground. */
@@ -99,25 +109,37 @@ impl GamePhysics {
             .insert_with_parent(collider, player2_handle, &mut gp.rigid_body_set);
         gp.player2_handle = player2_handle;
 
+        let rigid_body = RigidBodyBuilder::dynamic()
+            .translation(vector![20.0, 15.0])
+            .linear_damping(1.0)
+            .build();
+        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
+        let player3_handle = gp.rigid_body_set.insert(rigid_body);
+        let player_collider_handler = gp.collider_set
+            .insert_with_parent(collider, player3_handle, &mut gp.rigid_body_set);
+        gp.player3_handle = player3_handle;
+        gp.player_collider_handle = player_collider_handler;
+
         // create ball
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![10.0, 10.0])
             .linear_damping(1.0)
             .build();
-        let collider = ColliderBuilder::ball(0.25).restitution(0.7).build();
+        let collider = ColliderBuilder::ball(0.3).restitution(0.7).build();
         let ball_handle = gp.rigid_body_set.insert(rigid_body);
-        gp.collider_set
+        let collider_handle = gp.collider_set
             .insert_with_parent(collider, ball_handle, &mut gp.rigid_body_set);
         gp.ball_handle = ball_handle;
+        gp.ball_collider_handle = collider_handle;
 
         gp
     }
 
     pub fn step(&mut self) {
         let mut player2 = &mut self.rigid_body_set[self.player2_handle];
-        println!("{:?} {:?}", self.active_forces, player2.user_force());
+        // println!("{:?} {:?}", self.active_forces, player2.user_force());
         // println!("VEL: {}", player2.linvel());
-        println!("{}", player2.linvel().norm());
+        // println!("{}", player2.linvel().norm());
 
         player2.reset_forces(true);
         let force_vector = vector![0.0, PLAYER_SPEED];
@@ -133,6 +155,25 @@ impl GamePhysics {
             _ => vector![0.0, 0.0]
         };
         player2.add_force(force, true);
+
+        let mut player3 = &mut self.rigid_body_set[self.player3_handle];
+        player3.reset_forces(true);
+        if player3.linvel().norm() < self.touch_vector.norm() {
+            player3.add_force(self.touch_vector, true);
+        }
+        // println!("{}", player3.linvel().norm());
+        // println!("{}", self.touch_vector.norm());
+
+        let ball_contact = match self.narrow_phase.contact_pair(self.player_collider_handle, self.ball_collider_handle) {
+            Some(pair) => pair.has_any_active_contact,
+            None => false
+        };
+        // println!("{} {}", ball_contact, player3.linvel().norm());
+        if ball_contact && self.touch_vector.norm() >= MAX_VEC {
+            let impulse = player3.linvel().normalize() * BALL_IMPACT;
+            let ball = &mut self.rigid_body_set[self.ball_handle];
+            ball.apply_impulse(impulse, true);
+        }
 
         self.physics_pipeline.step(
             &self.gravity,
@@ -184,23 +225,32 @@ impl GamePhysics {
         (p.translation().x, p.translation().y, *radius)
     }
 
+    pub fn player3(&self) -> (f32, f32, f32, f32, f32) {
+        let p = &self.rigid_body_set[self.player3_handle];
+        let collider_handle = p.colliders().first().unwrap().0;
+        let radius = &self.collider_set[collider_handle].shape().as_ball().unwrap().radius;
+        (p.translation().x, p.translation().y, *radius, self.touch_vector.x, self.touch_vector.y)
+    }
+
     pub fn apply_impulse(&mut self, x: f32, y: f32) {
         &self.rigid_body_set[self.player_handle].apply_impulse(vector![x, y], true);
     }
 
     pub fn move_player(&mut self, x: f32, y: f32) {
-        // self.rigid_body_set[self.player2_handle].user_force().x = 0.0;
-        // self.rigid_body_set[self.player2_handle].user_force().y = -10.0;
-        // self.rigid_body_set[self.player2_handle].reset_forces(true);
         self.rigid_body_set[self.player2_handle].add_force(vector![x, y], true);
-        // self.rigid_body_set[self.player2_handle].set_linvel (vector![x, y], true);
-
-        // self.active_forces[dir] = force;
     }
 
     pub fn stop_force(&mut self) {
         self.rigid_body_set[self.player2_handle].reset_forces(true);
-        // self.rigid_body_set[self.player2_handle].set_linvel (vector![0.0, 0.0], true);
+    }
+
+    pub fn move_mouse(&mut self, (start_x, start_y): (f32, f32), (current_x, current_y): (f32, f32), scaling: f32) {
+        // println!("{} {} {} {}", start_x, start_y, current_x, current_y);
+        self.touch_vector = vector![(current_x - start_x) / scaling, (current_y - start_y) / scaling];
+        // println!("{}", self.touch_vector);
+        if self.touch_vector.norm() > MAX_VEC {
+            self.touch_vector = self.touch_vector.normalize() * MAX_VEC;
+        }
     }
 
     pub fn player_input(&mut self, keys: [bool; 4]) {

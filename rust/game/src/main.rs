@@ -3,6 +3,7 @@ use macroquad::input::KeyCode::{A, D, Down, Escape, Left, Right, S, Up, W};
 use macroquad::prelude::*;
 use rapier2d::prelude::Vector;
 use std::process::exit;
+use rapier2d::parry::transformation::utils::scaled;
 
 const SCALING: f32 = 20.0;
 const SPEED: f32 = 10.0;
@@ -16,6 +17,7 @@ async fn main() {
     // println!("{:?}", game_logic::physics::diff(30, 3));
 
     let mut s = GamePhysics::init();
+    let mut first_touch: (f32, f32) = (0.0, 0.0);
 
     println!("{:?}", s.player());
 
@@ -32,30 +34,18 @@ async fn main() {
         if is_key_pressed(Right) {
             s.apply_impulse(10.0, 0.0);
         }
-        // if is_key_pressed(W) {
-        //     s.move_player(0.0, -SPEED);
-        // }
-        // if is_key_pressed(S) {
-        //     s.move_player(0.0, SPEED);
-        // }
-        // if is_key_pressed(A) {
-        //     s.move_player(-SPEED, 0.0);
-        // }
-        // if is_key_pressed(D) {
-        //     s.move_player(SPEED, 0.0);
-        // }
-        // if is_key_released(W) {
-        //     s.move_player(0.0, SPEED);
-        // }
-        // if is_key_released(S) {
-        //     s.move_player(0.0, -SPEED);
-        // }
-        // if is_key_released(A) {
-        //     s.move_player(SPEED, 0.0);
-        // }
-        // if is_key_released(D) {
-        //     s.move_player(-SPEED, 0.0);
-        // }
+
+        if is_mouse_button_down(MouseButton::Left) {
+            let mp = mouse_position();
+            if first_touch == (0.0, 0.0) {
+                first_touch = mp;
+            }
+            s.move_mouse(first_touch, mp, SCALING);
+        }
+        if is_mouse_button_released(MouseButton::Left) {
+            first_touch = (0.0, 0.0);
+            s.move_mouse((0.0, 0.0), (0.0, 0.0), SCALING);
+        }
 
         s.player_input([
             get_keys_down().contains(&W),
@@ -94,6 +84,10 @@ async fn main() {
 
         let (p2x, p2y, p2r) = s.player2();
         draw_circle(p2x * SCALING, p2y * SCALING, p2r * SCALING, Color::from_hex(0x_77_77_77));
+
+        let (p3x, p3y, p3r, vx, vy) = s.player3();
+        draw_circle(p3x * SCALING, p3y * SCALING, p3r * SCALING, Color::from_hex(0x_FF_AA_11));
+        draw_line(p3x * SCALING, p3y * SCALING, (p3x + vx) * SCALING, (p3y + vy) * SCALING, 2.0, Color::from_hex(0x_FF_00_00));
 
         let walls = s.static_bodies();
         for (x, y, w, h) in walls {
