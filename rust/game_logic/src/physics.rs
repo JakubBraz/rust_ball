@@ -169,7 +169,7 @@ impl GamePhysics {
             None => false
         };
         // println!("{} {}", ball_contact, player3.linvel().norm());
-        if ball_contact && self.touch_vector.norm() >= MAX_VEC {
+        if ball_contact && self.touch_vector.norm() + 0.1 >= MAX_VEC {
             let impulse = player3.linvel().normalize() * BALL_IMPACT;
             let ball = &mut self.rigid_body_set[self.ball_handle];
             ball.apply_impulse(impulse, true);
@@ -245,6 +245,7 @@ impl GamePhysics {
     }
 
     pub fn move_mouse(&mut self, (start_x, start_y): (f32, f32), (current_x, current_y): (f32, f32), scaling: f32) {
+        // todo refactor, move start_touch to client side, and here pass onyl final vector
         // println!("{} {} {} {}", start_x, start_y, current_x, current_y);
         self.touch_vector = vector![(current_x - start_x) / scaling, (current_y - start_y) / scaling];
         // println!("{}", self.touch_vector);

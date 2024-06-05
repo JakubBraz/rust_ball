@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://tygolvn8xrgy"]
+[gd_scene load_steps=5 format=3 uid="uid://tygolvn8xrgy"]
 
 [ext_resource type="Script" path="res://main_scene.gd" id="1_6tetw"]
 
@@ -9,31 +9,91 @@ albedo_color = Color(0.205201, 0.694447, 0.137036, 1)
 albedo_color = Color(0, 0.558202, 0.857334, 1)
 roughness = 0.5
 
+[sub_resource type="Environment" id="Environment_omubs"]
+
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_6tetw")
 
 [node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 10.1524, -1.43051e-06, 10.4623)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0, 15)
 material_override = SubResource("StandardMaterial3D_nc2ix")
+size = Vector3(30, 1, 30)
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 9.69, 10.896, 21.554)
+[node name="Camera3D1" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 20, 47.61, 43.91)
+current = true
+fov = 30.0
+size = 44.286
+
+[node name="Camera3D2" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 20, 30.468, 64.332)
+fov = 30.0
+size = 35.0
+
+[node name="Camera3D3" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 20, 65, 15)
+fov = 30.0
+size = 35.0
+
+[node name="Camera3D4" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 20, 65, 15)
 projection = 1
-size = 16.238
+fov = 30.0
+size = 35.0
+
+[node name="Camera3D5" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 20, 54.683, 46.092)
+projection = 1
+fov = 30.0
+size = 35.0
+
+[node name="Camera3D6" type="Camera3D" parent="."]
+transform = Transform3D(0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, -0.353553, 0.612372, 49.895, 27.978, 46.092)
+projection = 1
+fov = 30.0
+size = 35.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -5.14025, 11.1226, 21.3811)
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
 light_energy = 1.5
 shadow_enabled = true
+shadow_opacity = 0.75
 shadow_blur = 0.75
 
-[node name="CSGSphere3D" type="CSGSphere3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.41381, 1, 10.6258)
+[node name="player" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 15)
 material_override = SubResource("StandardMaterial3D_xwmn3")
 radial_segments = 24
 rings = 24
 
-[node name="CSGSphere3D2" type="CSGSphere3D" parent="."]
-transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 9.08611, 1, 10.4301)
+[node name="ball" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.8, 10)
+radius = 0.3
 radial_segments = 24
 rings = 24
+
+[node name="wall1" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 0)
+size = Vector3(30, 1, 1)
+
+[node name="wall2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 30)
+size = Vector3(30, 1, 1)
+
+[node name="wall3" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 15)
+size = Vector3(1, 1, 30)
+
+[node name="wall4" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 1, 15)
+size = Vector3(1, 1, 30)
+
+[node name="vector_container" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 15)
+
+[node name="player_vector" type="CSGBox3D" parent="vector_container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+size = Vector3(1, 0.1, 0.1)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_omubs")
