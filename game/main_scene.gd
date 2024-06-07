@@ -92,3 +92,5 @@ func _input(event):
 			$Camera3D5.current = true
 		elif Input.is_key_pressed(KEY_6):
 			$Camera3D6.current = true
+		elif Input.is_key_pressed(KEY_7):
+			$Camera3D7.current = true
