@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 use rapier2d::na::Rotation2;
 use rapier2d::prelude::*;
+use crate::game_state::GameState;
 
 const PLAYER_SPEED: f32 = 10.0;
 const PLAYER_ACC: f32 = 2.0;
@@ -271,5 +272,11 @@ impl GamePhysics {
                 (-s.x + t.x, -s.y + t.y, s.x * 2.0, s.y * 2.0)
             })
             .collect()
+    }
+
+    pub fn get_game_state(&self) -> GameState {
+        let (player_x, player_y, player_r, touch_vec_x, touch_vec_y) = self.player3();
+        let (_, _, _, ball_x, ball_y, ball_r) = self.player();
+        GameState { player_x, player_y, player_r, ball_x, ball_y, ball_r, touch_vec_x, touch_vec_y }
     }
 }
