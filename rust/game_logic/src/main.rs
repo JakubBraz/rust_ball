@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use rapier2d::counters::Timer;
 use game_logic::physics::GamePhysics;
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 struct PlayerInput {
     start_x: f32,
     start_y: f32,
@@ -72,6 +72,10 @@ fn handle_game_state(send_to_input: Sender<InputRequest>, socket: UdpSocket, ) {
         // todo pick game state depending on player id (socket addr)
         for (addr, inp) in player_input {
 
+            // println!("player input {:?}", inp);
+            if inp == PlayerInput::default() {
+                game_physics.reset_kick();
+            }
             game_physics.move_mouse((inp.start_x, inp.start_y), (inp.current_x, inp.current_y), scaling);
 
             // todo 15ms passes for this loop, is it enough sufficient?
@@ -100,7 +104,7 @@ fn handle_game_state(send_to_input: Sender<InputRequest>, socket: UdpSocket, ) {
         }
 
         //todo why this sleep is necessary? shouldnt prev_game_state != game_state be enough?
-        sleep(Duration::from_millis(10));
+        sleep(Duration::from_millis(30));
         println!("Physics loop took: {:?}", i.elapsed());
     }
 }
@@ -153,6 +157,7 @@ fn handle_socket(input_sender: Sender<InputRequest>, socket: UdpSocket) {
                 let start_y = i16::from_ne_bytes(bytes[2..4].try_into().unwrap()) as f32;
                 let current_x = i16::from_ne_bytes(bytes[4..6].try_into().unwrap()) as f32;
                 let current_y = i16::from_ne_bytes(bytes[6..8].try_into().unwrap()) as f32;
+                // todo make client dont send touch vector always it changes; instead, send it only it  exceeds some threshold (for example 8 possible "speeds")
                 println!("{} bytes read, message: {:?}, {}, {}, {} {}", len, bytes, start_x, start_y, current_x, current_y);
 
                 let player_id = client_address;

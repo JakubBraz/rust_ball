@@ -31,6 +31,7 @@ pub struct GamePhysics {
 
     active_forces: [bool; 4],
     touch_vector: Vector<f32>,
+    after_kick: bool,
 }
 
 impl GamePhysics {
@@ -58,6 +59,7 @@ impl GamePhysics {
             ball_collider_handle: Default::default(),
             active_forces: [false, false, false, false],
             touch_vector: vector![0.0, 0.0],
+            after_kick: false,
         };
 
         /* Create the ground. */
@@ -170,10 +172,12 @@ impl GamePhysics {
             None => false
         };
         // println!("{} {}", ball_contact, player3.linvel().norm());
-        if ball_contact && self.touch_vector.norm() + 0.1 >= MAX_VEC {
-            let impulse = player3.linvel().normalize() * BALL_IMPACT;
+        if !self.after_kick && ball_contact && self.touch_vector.norm() + 0.1 >= MAX_VEC {
+            let v: Vector<f32> = self.rigid_body_set[self.ball_handle].translation() - self.rigid_body_set[self.player3_handle].translation();
+            let impulse = v.normalize() * BALL_IMPACT;
             let ball = &mut self.rigid_body_set[self.ball_handle];
             ball.apply_impulse(impulse, true);
+            self.after_kick = true;
         }
 
         self.physics_pipeline.step(
@@ -278,5 +282,11 @@ impl GamePhysics {
         let (player_x, player_y, player_r, touch_vec_x, touch_vec_y) = self.player3();
         let (_, _, _, ball_x, ball_y, ball_r) = self.player();
         GameState { player_x, player_y, player_r, ball_x, ball_y, ball_r, touch_vec_x, touch_vec_y }
+    }
+
+    pub fn reset_kick(&mut self) {
+        if self.after_kick {
+            self.after_kick = false;
+        }
     }
 }
