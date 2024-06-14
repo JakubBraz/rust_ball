@@ -1,8 +1,9 @@
-use game_logic::physics::GamePhysics;
+// use game_logic::physics::GamePhysics;
 use macroquad::input::KeyCode::{A, D, Down, Escape, Left, Right, S, Up, W};
 use macroquad::prelude::*;
 use rapier2d::prelude::Vector;
 use std::process::exit;
+use game_logic_lib::physics::GamePhysics;
 use rapier2d::parry::transformation::utils::scaled;
 
 const SCALING: f32 = 20.0;
@@ -12,8 +13,6 @@ const SPEED: f32 = 10.0;
 async fn main() {
     // fn main() {
     println!("Hello, world!");
-    println!("{:?}", game_logic::add(1, 2));
-    println!("{:?}", game_logic::f2(30, 3));
     // println!("{:?}", game_logic::physics::diff(30, 3));
 
     let mut s = GamePhysics::init();

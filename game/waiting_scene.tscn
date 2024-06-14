@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://bjkb3gtsffb7q"]
+
+[ext_resource type="Script" path="res://waiting_scene.gd" id="1_w3nn0"]
+[ext_resource type="Texture2D" uid="uid://csyuidxm5ftvp" path="res://graphics/ball.png" id="2_3k0qa"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_w3nn0")
+
+[node name="Label" type="Label" parent="."]
+offset_right = 1154.0
+offset_bottom = 525.0
+theme_override_font_sizes/font_size = 50
+text = "Searching for a game..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(569, 374)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_3k0qa")

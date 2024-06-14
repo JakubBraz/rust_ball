@@ -1,18 +1,16 @@
 extends Node3D
 
-var socket
 var start_touch = Vector2()
 var prev_touch = Vector2()
-
+var message_id = 0
+var global_values
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	socket = PacketPeerUDP.new()
-	socket.set_dest_address("127.0.0.1", 8019)
-	socket.put_packet("hello".to_ascii_buffer())
 	print("position: ", $player.position)
 	print("position: ", $ball.position)
-	
+	global_values = get_node("/root/GlobalValues")
+	print(global_values.player_id)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -37,19 +35,13 @@ func _process(delta):
 			prev_touch = pos
 			var touch_vec = Vector2(pos[0] - start_touch[0], pos[1] - start_touch[1])
 			touch_vec = touch_vec.rotated(-get_viewport().get_camera_3d().rotation[1])
-			var bytes  = PackedByteArray([0, 0, 0, 0, 0, 0, 0, 0])
-			#bytes.encode_u16(0, start_touch[0])
-			bytes.encode_s16(0, 0)
-			#bytes.encode_u16(2, start_touch[1])
-			bytes.encode_s16(2, 0)
-			bytes.encode_s16(4, touch_vec[0])
-			bytes.encode_s16(6, touch_vec[1])
-			socket.put_packet(bytes)
+			message_id += 1
+			global_values.send_input(message_id, touch_vec[0], touch_vec[1])
 			#socket.put_packet("aaa".to_ascii_buffer())
 	#if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		#print("MOUSE PRESSED")
 
-	var p = socket.get_packet()
+	var p = global_values.socket.get_packet()
 	if len(p) > 0:
 		print("get_packet: ", p, " ", p.get_string_from_ascii())
 		var player_x = p.decode_float(0);
@@ -78,7 +70,8 @@ func _input(event):
 			print("released")
 			print(event.position)
 			start_touch = Vector2()
-			socket.put_packet(PackedByteArray([0, 0, 0, 0, 0, 0, 0, 0]))
+			message_id += 1
+			global_values.send_input(message_id, 0, 0)
 	elif (event is InputEventKey) and not event.is_echo():
 		if Input.is_key_pressed(KEY_1):
 			$Camera3D1.current = true
