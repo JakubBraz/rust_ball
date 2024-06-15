@@ -11,10 +11,8 @@ pub enum PlayerGame {
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct PlayerInput {
-    pub start_x: f32,
-    pub start_y: f32,
-    pub current_x: f32,
-    pub current_y: f32,
+    pub vec_x: f32,
+    pub vec_y: f32,
 }
 
 #[derive(Debug)]

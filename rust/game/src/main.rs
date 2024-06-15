@@ -1,13 +1,13 @@
 // use game_logic::physics::GamePhysics;
 use macroquad::input::KeyCode::{A, D, Down, Escape, Left, Right, S, Up, W};
 use macroquad::prelude::*;
-use rapier2d::prelude::Vector;
+use rapier2d::prelude::{Vector, vector};
 use std::process::exit;
 use game_logic_lib::physics::GamePhysics;
 use rapier2d::parry::transformation::utils::scaled;
 
 const SCALING: f32 = 20.0;
-const SPEED: f32 = 10.0;
+const MAX_TOUCH_LEN: f32 = 70.0;
 
 #[macroquad::main("BasicShapes")]
 async fn main() {
@@ -17,6 +17,8 @@ async fn main() {
 
     let mut s = GamePhysics::init();
     let mut first_touch: (f32, f32) = (0.0, 0.0);
+    let mut vec_x = 0.0;
+    let mut vec_y = 0.0;
 
     println!("{:?}", s.player());
 
@@ -39,11 +41,22 @@ async fn main() {
             if first_touch == (0.0, 0.0) {
                 first_touch = mp;
             }
-            s.move_mouse(first_touch, mp, SCALING);
+            vec_x = mp.0 - first_touch.0;
+            vec_y = mp.1 - first_touch.1;
+            let vec_len = (vec_x * vec_x + vec_y * vec_y).sqrt();
+            if vec_len > MAX_TOUCH_LEN {
+                vec_x = vec_x / vec_len * MAX_TOUCH_LEN;
+                vec_y = vec_y / vec_len * MAX_TOUCH_LEN;
+            }
+            let vx = vec_x / MAX_TOUCH_LEN;
+            let vy = vec_y / MAX_TOUCH_LEN;
+            s.move_mouse(vx, vy);
         }
         if is_mouse_button_released(MouseButton::Left) {
             first_touch = (0.0, 0.0);
-            s.move_mouse((0.0, 0.0), (0.0, 0.0), SCALING);
+            vec_x = 0.0;
+            vec_y = 0.0;
+            s.move_mouse(vec_x, vec_y);
         }
 
         s.player_input([
@@ -86,7 +99,8 @@ async fn main() {
 
         let (p3x, p3y, p3r, vx, vy) = s.player3();
         draw_circle(p3x * SCALING, p3y * SCALING, p3r * SCALING, Color::from_hex(0x_FF_AA_11));
-        draw_line(p3x * SCALING, p3y * SCALING, (p3x + vx) * SCALING, (p3y + vy) * SCALING, 2.0, Color::from_hex(0x_FF_00_00));
+        // draw_line(p3x * SCALING, p3y * SCALING, (p3x + vx) * SCALING, (p3y + vy) * SCALING, 2.0, Color::from_hex(0x_FF_00_00));
+        draw_line(p3x * SCALING, p3y * SCALING, p3x * SCALING + vec_x, p3y * SCALING + vec_y, 2.0, Color::from_hex(0x_FF_00_00));
 
         let walls = s.static_bodies();
         for (x, y, w, h) in walls {

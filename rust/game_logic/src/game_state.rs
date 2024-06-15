@@ -3,51 +3,36 @@ use std::net::UdpSocket;
 use std::sync::mpsc::{channel, Sender};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
+use crate::game_packet;
 use crate::physics::GamePhysics;
 use crate::players_state::{PlayerInput, PlayersStateMessage};
 // use crate::PlayerInput;
 
 #[derive(Default, PartialEq)]
 pub struct GameState {
-    pub player_x: f32,
-    pub player_y: f32,
-    pub player_r: f32,
     pub ball_x: f32,
     pub ball_y: f32,
-    pub ball_r: f32,
-    pub touch_vec_x: f32,
-    pub touch_vec_y: f32,
-}
-
-impl GameState {
-    pub fn to_bytes(&self) -> Vec<u8> {
-        [
-            self.player_x.to_ne_bytes(),
-            self.player_y.to_ne_bytes(),
-            self.player_r.to_ne_bytes(),
-            self.ball_x.to_ne_bytes(),
-            self.ball_y.to_ne_bytes(),
-            self.ball_r.to_ne_bytes(),
-            // todo don't send to client touch_vec, let it handle drawing it on its own
-            self.touch_vec_x.to_ne_bytes(),
-            self.touch_vec_y.to_ne_bytes(),
-        ].concat()
-    }
+    pub player_1_1_x: f32,
+    pub player_1_1_y: f32,
+    pub player_1_2_x: f32,
+    pub player_1_2_y: f32,
+    pub player_2_1_x: f32,
+    pub player_2_1_y: f32,
+    pub player_2_2_x: f32,
+    pub player_2_2_y: f32,
 }
 
 pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: UdpSocket, ) {
     let (tx, rx) = channel();
 
     let step: Duration = Duration::from_secs_f32(1.0 / 60.0);
-    //todo read scaling from client socket
-    let scaling: f32 = 20.0;
 
     let mut game_physics = GamePhysics::init();
 
     let mut last_update = Duration::from_millis(0);
     let game_duration = Instant::now();
 
-    let mut prev_game_state = Default::default();
+    let mut prev_game_state: GameState = Default::default();
 
     loop {
         let i = Instant::now();
@@ -56,12 +41,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
 
         // todo pick game state depending on player id (socket addr)
         for (addr, inp) in player_input {
-
-            // println!("player input {:?}", inp);
-            if inp == PlayerInput::default() {
-                game_physics.reset_kick();
-            }
-            game_physics.move_mouse((inp.start_x, inp.start_y), (inp.current_x, inp.current_y), scaling);
+            game_physics.move_mouse(inp.vec_x, inp.vec_y);
 
             // todo 15ms passes for this loop, is it enough sufficient?
             while game_duration.elapsed() - last_update >= step {
@@ -72,17 +52,16 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
             }
 
             // todo sending response in handling physics? is it a good idea? maybe move it to another thread?
-            let game_state = game_physics.get_game_state();
-            if prev_game_state != game_state {
-                let bytes = game_state.to_bytes();
+            let (ball_x, ball_y, player_x, player_y) = game_physics.get_game_state();
+            let mut current_game_state = GameState::default();
+            current_game_state.ball_x = ball_x;
+            current_game_state.ball_y = ball_y;
+            current_game_state.player_1_1_x = player_x;
+            current_game_state.player_1_1_y = player_y;
 
-                // if env::consts::OS == "windows" {
-                //     //todo temporary windows workaround
-                //     let s = UdpSocket::bind("127.0.0.1:8053").unwrap();
-                //     s.connect(addr).unwrap();
-                //     s.send(&bytes).unwrap();
-                // }
-                // else {
+            if prev_game_state != current_game_state {
+                let bytes = game_packet::to_bytes(&current_game_state, 0);
+
                 match socket.send_to(&bytes, addr) {
                     Ok(b) => {
                         // println!("{} bytes sent", b);
@@ -92,9 +71,8 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                         panic!("Cannot send to socket!");
                     }
                 }
-                // }
 
-                prev_game_state = game_state;
+                prev_game_state = current_game_state;
             }
         }
 

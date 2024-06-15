@@ -1,4 +1,4 @@
-mod game_packet;
+pub mod game_packet;
 mod players_state;
 
 mod physics;
@@ -17,8 +17,6 @@ use crate::game_packet::handle_socket;
 use crate::game_state::handle_game_state;
 use crate::physics::GamePhysics;
 use crate::players_state::{handle_players_state, PlayersStateMessage};
-
-type PlayerId = u32;
 
 fn main() {
     let (tx_input, rx_input) = channel();
@@ -73,7 +71,7 @@ fn old_main() {
                     let current_y = i16::from_ne_bytes(bytes[6..8].try_into().unwrap()) as f32;
                     println!("{} bytes read, message: {:?}, {}, {}, {} {}", len, bytes, start_x, start_y, current_x, current_y);
 
-                    game_physics.move_mouse((start_x, start_y), (current_x, current_y), scaling);
+                    game_physics.move_mouse(0.0, 0.0);
                 }
                 Err(e) => {
                     if e.kind() != TimedOut {

@@ -1,7 +1,6 @@
 use std::f32::consts::PI;
 use rapier2d::na::Rotation2;
 use rapier2d::prelude::*;
-use crate::game_state::GameState;
 
 const PLAYER_SPEED: f32 = 10.0;
 const PLAYER_ACC: f32 = 2.0;
@@ -249,14 +248,15 @@ impl GamePhysics {
         self.rigid_body_set[self.player2_handle].reset_forces(true);
     }
 
-    pub fn move_mouse(&mut self, (start_x, start_y): (f32, f32), (current_x, current_y): (f32, f32), scaling: f32) {
-        // todo refactor, move start_touch to client side, and here pass onyl final vector
-        // println!("{} {} {} {}", start_x, start_y, current_x, current_y);
-        self.touch_vector = vector![(current_x - start_x) / scaling, (current_y - start_y) / scaling];
-        // println!("{}", self.touch_vector);
-        if self.touch_vector.norm() > MAX_VEC {
-            self.touch_vector = self.touch_vector.normalize() * MAX_VEC;
+    pub fn move_mouse(&mut self, vec_x: f32, vec_y: f32) {
+        if vec_x == 0.0 && vec_y == 0.0 {
+            self.reset_kick();
         }
+        let mut v = vector![vec_x, vec_y];
+        if v.norm() > 1.0 {
+            v = v.normalize();
+        }
+        self.touch_vector = v * MAX_VEC;
     }
 
     pub fn player_input(&mut self, keys: [bool; 4]) {
@@ -278,13 +278,13 @@ impl GamePhysics {
             .collect()
     }
 
-    pub fn get_game_state(&self) -> GameState {
+    pub fn get_game_state(&self) -> (f32, f32, f32, f32) {
         let (player_x, player_y, player_r, touch_vec_x, touch_vec_y) = self.player3();
         let (_, _, _, ball_x, ball_y, ball_r) = self.player();
-        GameState { player_x, player_y, player_r, ball_x, ball_y, ball_r, touch_vec_x, touch_vec_y }
+        (ball_x, ball_y, player_x, player_y)
     }
 
-    pub fn reset_kick(&mut self) {
+    fn reset_kick(&mut self) {
         if self.after_kick {
             self.after_kick = false;
         }

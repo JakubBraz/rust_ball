@@ -4,14 +4,11 @@ var socket
 var ping_freq = 20.0
 var packet_out = PackedByteArray([
 	13, 178, # constant value, always the same
-	2, 0, # packet type, 1 = ping, 2 = input
+	2, 0, # packet type, 1 = ping, 2 = input / game state
 	0, 0, 0, 0, # player id, given by server in pong message
-	0, 0, 0, 0, # message id])
-	# todo remove start_touch, send only current vector, of current length in percent
-	0, 0, # start_touch_x
-	0, 0, # start touch_y
-	0, 0, # current touch_x
-	0, 0, # current touch_y
+	0, 0, 0, 0, # message id
+	0, 0, 0, 0, # normalized touch vec x
+	0, 0, 0, 0, # normalized touch vec y
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, #unused
 	])
 
@@ -25,6 +22,7 @@ func _ready():
 	print("Game start!")
 	socket = PacketPeerUDP.new()
 	socket.set_dest_address("127.0.0.1", 8019)
+	#socket.set_dest_address("172.27.181.206", 8019)
 	#socket.connect_to_host("127.0.0.1", 8019)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -41,14 +39,11 @@ func _process(delta):
 		socket.put_packet(bytes)
 		last_ping_time = game_time
 
-func send_input(message_id, x, y):
-	var xx = 13
+func send_input(message_id, v):
 	var bytes  = packet_out
 	bytes.encode_u32(4, player_id)
 	bytes.encode_u32(8, message_id)
 	# todo dont send those zeros, the same as previous todo
-	bytes.encode_s16(12, 0)
-	bytes.encode_s16(14, 0)
-	bytes.encode_s16(16, x)
-	bytes.encode_s16(18, y)
+	bytes.encode_float(12, v[0])
+	bytes.encode_float(16, v[1])
 	socket.put_packet(bytes)

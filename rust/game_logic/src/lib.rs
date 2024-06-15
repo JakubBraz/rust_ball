@@ -1,7 +1,9 @@
-// todo handle those mode properly
+// todo handle those mods properly
 pub mod physics;
 mod game_state;
 mod players_state;
+
+pub mod game_packet;
 
 // pub mod game_state;
 

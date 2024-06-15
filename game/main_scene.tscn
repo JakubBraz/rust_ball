@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://tygolvn8xrgy"]
+[gd_scene load_steps=6 format=3 uid="uid://tygolvn8xrgy"]
 
 [ext_resource type="Script" path="res://main_scene.gd" id="1_6tetw"]
+[ext_resource type="Texture2D" uid="uid://bj3rfh3bcn74o" path="res://graphics/touch.png" id="2_6rela"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nc2ix"]
 albedo_color = Color(0.205201, 0.694447, 0.137036, 1)
@@ -94,7 +95,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 1, 15)
 size = Vector3(1, 1, 30)
 
 [node name="vector_container" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 15)
+transform = Transform3D(0, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, 15)
 
 [node name="player_vector" type="CSGBox3D" parent="vector_container"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -102,3 +103,9 @@ size = Vector3(1, 0.1, 0.1)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_omubs")
+
+[node name="touch_icon" type="Sprite2D" parent="."]
+visible = false
+modulate = Color(1, 1, 1, 0.498039)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_6rela")
