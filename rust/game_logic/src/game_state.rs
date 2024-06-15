@@ -76,23 +76,23 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
             if prev_game_state != game_state {
                 let bytes = game_state.to_bytes();
 
-                if env::consts::OS == "windows" {
-                    //todo temporary windows workaround
-                    let s = UdpSocket::bind("127.0.0.1:8053").unwrap();
-                    s.connect(addr).unwrap();
-                    s.send(&bytes).unwrap();
-                }
-                else {
-                    match socket.send_to(&bytes, addr) {
-                        Ok(b) => {
-                            // println!("{} bytes sent", b);
-                        }
-                        Err(e) => {
-                            println!("Cannot send, {}", e);
-                            panic!("Cannot send to socket!");
-                        }
+                // if env::consts::OS == "windows" {
+                //     //todo temporary windows workaround
+                //     let s = UdpSocket::bind("127.0.0.1:8053").unwrap();
+                //     s.connect(addr).unwrap();
+                //     s.send(&bytes).unwrap();
+                // }
+                // else {
+                match socket.send_to(&bytes, addr) {
+                    Ok(b) => {
+                        // println!("{} bytes sent", b);
+                    }
+                    Err(e) => {
+                        println!("Cannot send, {}", e);
+                        panic!("Cannot send to socket!");
                     }
                 }
+                // }
 
                 prev_game_state = game_state;
             }
