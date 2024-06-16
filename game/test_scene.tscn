@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://274ifl58iqum"]
+[gd_scene load_steps=14 format=3 uid="uid://274ifl58iqum"]
 
 [ext_resource type="Script" path="res://test_scene.gd" id="1_yu137"]
 
@@ -40,6 +40,8 @@ roughness = 0.55
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5xlnj"]
 albedo_color = Color(0.101634, 0.541945, 0.714548, 1)
 roughness = 0.51
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_13bxs"]
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_yu137")
@@ -140,3 +142,9 @@ node_b = NodePath("../RigidBody3D6")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.590871, 2.4674, 0)
 node_a = NodePath("../RigidBody3D6")
 node_b = NodePath("../RigidBody3D")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.20807, 0.752477, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("BoxShape3D_13bxs")

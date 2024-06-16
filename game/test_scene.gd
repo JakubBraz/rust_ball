@@ -4,9 +4,12 @@ var press1 = true
 var press2 = true
 var press3 = true
 
-func _ready():
-	pass # Replace with function body.
+#func _ready():
+	#$container/RigidBody3D4.add_constant_central_force(Vector3(-1.0, 0.0, 0.0))
 
+# TO DZIALA!
+#func _physics_process(delta):
+	#$container.position += Vector3(0.01, 0.0, 0.0)
 
 func _process(delta):
 	#$container.position += Vector3(0.001, 0.0, 0.0)
