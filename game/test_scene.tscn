@@ -1,0 +1,142 @@
+[gd_scene load_steps=13 format=3 uid="uid://274ifl58iqum"]
+
+[ext_resource type="Script" path="res://test_scene.gd" id="1_yu137"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_6bxbe"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_iu5o6"]
+sky_material = SubResource("ProceduralSkyMaterial_6bxbe")
+
+[sub_resource type="Environment" id="Environment_hh8ev"]
+background_mode = 2
+sky = SubResource("Sky_iu5o6")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fottm"]
+albedo_color = Color(1.56425e-06, 0.628618, 0.247675, 1)
+roughness = 0.48
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7r38t"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_85576"]
+size = Vector3(0.2, 0.2, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mhfaj"]
+albedo_color = Color(0.945029, 0, 0.250716, 1)
+roughness = 0.46
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8isg7"]
+size = Vector3(0.2, 0.2, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xfbsg"]
+albedo_color = Color(0.799532, 0.00579976, 0.281038, 1)
+roughness = 0.55
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jg8yf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5xlnj"]
+albedo_color = Color(0.101634, 0.541945, 0.714548, 1)
+roughness = 0.51
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_yu137")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_hh8ev")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 14.0459, 48.6563, -24.3279)
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(5.875, 0, 0, 0, 0.5, 0, 0, 0, 5.875, 0, 0, 0)
+use_collision = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 7.415, 7.411)
+
+[node name="ConeTwistJoint3D" type="ConeTwistJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.77125, 4.24745, 0)
+node_a = NodePath("../RigidBody3D2")
+node_b = NodePath("../RigidBody3D3")
+
+[node name="RigidBody3D2" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.82579, 2.37108, 0)
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="RigidBody3D2"]
+material_override = SubResource("StandardMaterial3D_fottm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D2"]
+shape = SubResource("BoxShape3D_7r38t")
+
+[node name="RigidBody3D3" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.764312, 5.42314, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D3"]
+shape = SubResource("BoxShape3D_85576")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D3"]
+material_override = SubResource("StandardMaterial3D_mhfaj")
+size = Vector3(0.2, 0.2, 0.2)
+
+[node name="container" type="Node3D" parent="."]
+
+[node name="RigidBody3D4" type="RigidBody3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.598993, 4.0646, 0)
+mass = 0.2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="container/RigidBody3D4"]
+shape = SubResource("BoxShape3D_8isg7")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="container/RigidBody3D4"]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xfbsg")
+
+[node name="RigidBody3D5" type="RigidBody3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.598993, 3.52176, 0)
+mass = 0.2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="container/RigidBody3D5"]
+shape = SubResource("BoxShape3D_8isg7")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="container/RigidBody3D5"]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xfbsg")
+
+[node name="RigidBody3D6" type="RigidBody3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.598993, 2.85702, 0)
+mass = 0.2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="container/RigidBody3D6"]
+shape = SubResource("BoxShape3D_8isg7")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="container/RigidBody3D6"]
+transform = Transform3D(0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_xfbsg")
+
+[node name="RigidBody3D" type="RigidBody3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.67981, 1.543, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="container/RigidBody3D"]
+shape = SubResource("BoxShape3D_jg8yf")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="container/RigidBody3D"]
+material_override = SubResource("StandardMaterial3D_5xlnj")
+
+[node name="Generic6DOFJoint3D" type="Generic6DOFJoint3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.580756, 3.83045, 0)
+node_a = NodePath("../RigidBody3D4")
+node_b = NodePath("../RigidBody3D5")
+
+[node name="Generic6DOFJoint3D2" type="Generic6DOFJoint3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.639856, 3.21942, 0)
+node_a = NodePath("../RigidBody3D5")
+node_b = NodePath("../RigidBody3D6")
+
+[node name="Generic6DOFJoint3D3" type="Generic6DOFJoint3D" parent="container"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.590871, 2.4674, 0)
+node_a = NodePath("../RigidBody3D6")
+node_b = NodePath("../RigidBody3D")

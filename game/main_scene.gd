@@ -4,6 +4,8 @@ extends Node3D
 const MAX_TOUCH_LEN_SCREEN = 70.0
 const TOUCH_SCALLING = 0.05
 
+var joypad_vector = Vector2()
+
 var start_touch = Vector2()
 var prev_touch = Vector2()
 var message_id = 0
@@ -16,19 +18,15 @@ func _ready():
 	global_values = get_node("/root/GlobalValues")
 	print(global_values.player_id)
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	#print("process " + str(delta))
-	#socket.put_packet("test".to_ascii_buffer())
-	
-	if Input.is_action_pressed("ui_left"):
-		$player.position += Vector3(-0.15, 0.0, 0.0)
-	elif Input.is_action_pressed("ui_right"):
-		$player.position += Vector3(0.15, 0.0, 0.0)
-	elif Input.is_action_pressed("ui_up"):
-		$player.position += Vector3(0.0, 0.0, -0.15)
-	elif Input.is_action_pressed("ui_down"):
-		$player.position += Vector3(0.0, 0.0, 0.15)
+	#if Input.is_action_pressed("ui_left"):
+		#$player.position += Vector3(-0.15, 0.0, 0.0)
+	#elif Input.is_action_pressed("ui_right"):
+		#$player.position += Vector3(0.15, 0.0, 0.0)
+	#elif Input.is_action_pressed("ui_up"):
+		#$player.position += Vector3(0.0, 0.0, -0.15)
+	#elif Input.is_action_pressed("ui_down"):
+		#$player.position += Vector3(0.0, 0.0, 0.15)
 	
 	if start_touch != Vector2():
 		var pos = get_viewport().get_mouse_position()
@@ -45,24 +43,26 @@ func _process(delta):
 		if d > 1:
 			print("touch ", pos)
 			prev_touch = pos
-			#var touch_vec = Vector2(pos[0] - start_touch[0], pos[1] - start_touch[1])
-			#touch_vec = touch_vec.rotated(-get_viewport().get_camera_3d().rotation[1])
 			message_id += 1
 			global_values.send_input(message_id, normalized_touch)
-			#socket.put_packet("aaa".to_ascii_buffer())
-	#if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		#print("MOUSE PRESSED")
+		
+	#if joypad_vector.length() > 0.2:
+		#message_id += 1
+		#global_values.send_input(message_id, joypad_vector)
 
 	# todo move reading packet to global_values
 	var p = global_values.socket.get_packet()
 	if len(p) > 0:
-		print("get_packet: ", p, " ", p.get_string_from_ascii())
+		print(global_values.game_time, ", get_packet: ", p, " ", p.get_string_from_ascii())
 		var player_x = p.decode_float(16);
 		var player_y = p.decode_float(20);
+		var player2_x = p.decode_float(32);
+		var player2_y = p.decode_float(36);
 		var ball_x = p.decode_float(8);
 		var ball_y = p.decode_float(12);
 		#print([player_x, player_y, player_r, ball_x, ball_y, ball_r])
 		$player.position = Vector3(player_x, $player.position[1], player_y)
+		$player2.position = Vector3(player2_x, $player2.position[1], player2_y)
 		$ball.position = Vector3(ball_x, $ball.position[1], ball_y)
 		
 
@@ -98,3 +98,10 @@ func _input(event):
 			$Camera3D6.current = true
 		elif Input.is_key_pressed(KEY_7):
 			$Camera3D7.current = true
+	elif (event is InputEventJoypadMotion):
+		#print(event)
+		#print(Input.get_vector("move_left", "move_right", "move_forward", "move_back"))
+		if event.axis == 0:
+			joypad_vector[0] = event.axis_value
+		elif event.axis == 1:
+			joypad_vector[1] = event.axis_value

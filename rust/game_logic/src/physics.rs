@@ -22,15 +22,21 @@ pub struct GamePhysics {
     query_pipeline: QueryPipeline,
     player_handle: RigidBodyHandle,
     player2_handle: RigidBodyHandle,
-    player3_handle: RigidBodyHandle,
     ball_handle: RigidBodyHandle,
     wall_handlers: Vec<ColliderHandle>,
-    player_collider_handle: ColliderHandle,
     ball_collider_handle: ColliderHandle,
 
     active_forces: [bool; 4],
+
+    player3_handle: RigidBodyHandle,
+    player_collider_handle: ColliderHandle,
     touch_vector: Vector<f32>,
     after_kick: bool,
+
+    player4_handle: RigidBodyHandle,
+    player4_collider_handle: ColliderHandle,
+    touch_vector4: Vector<f32>,
+    after_kick4: bool,
 }
 
 impl GamePhysics {
@@ -59,6 +65,11 @@ impl GamePhysics {
             active_forces: [false, false, false, false],
             touch_vector: vector![0.0, 0.0],
             after_kick: false,
+
+            player4_handle: Default::default(),
+            player4_collider_handle: Default::default(),
+            touch_vector4: vector![0.0, 0.0],
+            after_kick4: false,
         };
 
         /* Create the ground. */
@@ -112,7 +123,7 @@ impl GamePhysics {
         gp.player2_handle = player2_handle;
 
         let rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![20.0, 15.0])
+            .translation(vector![10.0, 15.0])
             .linear_damping(1.0)
             .build();
         let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
@@ -121,6 +132,17 @@ impl GamePhysics {
             .insert_with_parent(collider, player3_handle, &mut gp.rigid_body_set);
         gp.player3_handle = player3_handle;
         gp.player_collider_handle = player_collider_handler;
+
+        let rigid_body = RigidBodyBuilder::dynamic()
+            .translation(vector![30.0, 15.0])
+            .linear_damping(1.0)
+            .build();
+        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
+        let player4_handle = gp.rigid_body_set.insert(rigid_body);
+        let player_collider_handler = gp.collider_set
+            .insert_with_parent(collider, player4_handle, &mut gp.rigid_body_set);
+        gp.player4_handle = player4_handle;
+        gp.player4_collider_handle = player_collider_handler;
 
         // create ball
         let rigid_body = RigidBodyBuilder::dynamic()
@@ -229,11 +251,18 @@ impl GamePhysics {
         (p.translation().x, p.translation().y, *radius)
     }
 
-    pub fn player3(&self) -> (f32, f32, f32, f32, f32) {
+    pub fn player3(&self) -> (f32, f32, f32) {
         let p = &self.rigid_body_set[self.player3_handle];
         let collider_handle = p.colliders().first().unwrap().0;
         let radius = &self.collider_set[collider_handle].shape().as_ball().unwrap().radius;
-        (p.translation().x, p.translation().y, *radius, self.touch_vector.x, self.touch_vector.y)
+        (p.translation().x, p.translation().y, *radius)
+    }
+
+    pub fn player4(&self) -> (f32, f32, f32) {
+        let p = &self.rigid_body_set[self.player4_handle];
+        let collider_handle = p.colliders().first().unwrap().0;
+        let radius = &self.collider_set[collider_handle].shape().as_ball().unwrap().radius;
+        (p.translation().x, p.translation().y, *radius)
     }
 
     pub fn apply_impulse(&mut self, x: f32, y: f32) {
@@ -278,10 +307,11 @@ impl GamePhysics {
             .collect()
     }
 
-    pub fn get_game_state(&self) -> (f32, f32, f32, f32) {
-        let (player_x, player_y, player_r, touch_vec_x, touch_vec_y) = self.player3();
+    pub fn get_game_state(&self) -> (f32, f32, f32, f32, f32, f32) {
+        let (player1_x, player1_y, player1_r) = self.player3();
+        let (player2_x, player2_y, player2_r) = self.player4();
         let (_, _, _, ball_x, ball_y, ball_r) = self.player();
-        (ball_x, ball_y, player_x, player_y)
+        (ball_x, ball_y, player1_x, player1_y, player2_x, player2_y)
     }
 
     fn reset_kick(&mut self) {

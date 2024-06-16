@@ -97,10 +97,12 @@ async fn main() {
         let (p2x, p2y, p2r) = s.player2();
         draw_circle(p2x * SCALING, p2y * SCALING, p2r * SCALING, Color::from_hex(0x_77_77_77));
 
-        let (p3x, p3y, p3r, vx, vy) = s.player3();
+        let (p3x, p3y, p3r) = s.player3();
         draw_circle(p3x * SCALING, p3y * SCALING, p3r * SCALING, Color::from_hex(0x_FF_AA_11));
-        // draw_line(p3x * SCALING, p3y * SCALING, (p3x + vx) * SCALING, (p3y + vy) * SCALING, 2.0, Color::from_hex(0x_FF_00_00));
         draw_line(p3x * SCALING, p3y * SCALING, p3x * SCALING + vec_x, p3y * SCALING + vec_y, 2.0, Color::from_hex(0x_FF_00_00));
+
+        let (p4x, p4y, p4r) = s.player4();
+        draw_circle(p4x * SCALING, p4y * SCALING, p4r * SCALING, Color::from_hex(0x_11_AA_FF));
 
         let walls = s.static_bodies();
         for (x, y, w, h) in walls {
