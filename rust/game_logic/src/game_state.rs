@@ -54,7 +54,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                         match player_left {
                             None => {}
                             Some((addr, inp)) => {
-                                game_physics.move_mouse(inp.vec_x, inp.vec_y);
+                                game_physics.move_mouse(0, inp.vec_x, inp.vec_y);
 
                                 let mut physics_updated = false;
                                 while game_duration.elapsed() - *last_update >= step {
