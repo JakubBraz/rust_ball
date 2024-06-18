@@ -11,12 +11,17 @@ var prev_touch = Vector2()
 var message_id = 0
 var global_values
 
+var is_left = false
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	print("position: ", $player.position)
 	print("position: ", $ball.position)
 	global_values = get_node("/root/GlobalValues")
 	print(global_values.player_id)
+	
+	$player.visible = false
+	$player2.visible = false
 
 func _process(delta):
 	#if Input.is_action_pressed("ui_left"):
@@ -36,7 +41,9 @@ func _process(delta):
 		$vector_container.scale = Vector3(len * TOUCH_SCALLING, 1, 1)
 		#$vector_container.scale = Vector3(MAX_TOUCH_LEN_GAME, 1, 1)
 		$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
-		$vector_container.position = $player.position
+		var vec_pos = $player.position if is_left else $player2.position
+		print("Is LEFT??? ", is_left)
+		$vector_container.position = vec_pos
 		
 		var d = (prev_touch - pos).length()
 		#print("distance", d)
@@ -60,9 +67,23 @@ func _process(delta):
 		var player2_y = p.decode_float(36);
 		var ball_x = p.decode_float(8);
 		var ball_y = p.decode_float(12);
+		var flags = p.decode_u8(54);
+		
+		is_left = (0x80 & flags) != 0;
 		#print([player_x, player_y, player_r, ball_x, ball_y, ball_r])
-		$player.position = Vector3(player_x, $player.position[1], player_y)
-		$player2.position = Vector3(player2_x, $player2.position[1], player2_y)
+		
+		if player_x == 0.0 and player_y == 0.0:
+			$player.visible = false
+		else:
+			$player.visible = true
+			$player.position = Vector3(player_x, $player.position[1], player_y)
+		
+		if player2_x == 0.0 and player2_y == 0.0:
+			$player2.visible = false
+		else:
+			$player2.visible = true
+			$player2.position = Vector3(player2_x, $player2.position[1], player2_y)
+			
 		$ball.position = Vector3(ball_x, $ball.position[1], ball_y)
 		
 

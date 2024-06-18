@@ -74,8 +74,10 @@ pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
     let score1: u16 = 0;
     let score2: u16 = 0;
     let time: u16 = 0;
-    let kicks_game_over_bool: u8 = 0;
     let unused: [u8; 9] = [0; 9];
+
+    let is_left = (if gs.is_left { 1 } else { 0 }) << 7;
+    let kicks_game_over_bool: u8 = is_left;
 
     let mut out_packet = [
         0, 0, // const val
@@ -94,7 +96,7 @@ pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
         0, 0, // score 1
         0, 0, // score 2
         0, 0, // time
-        0, // boolean flags, kick ready 1 2 3 4, is game over
+        0, // boolean flags, is_left | kick ready 1 2 3 4 | is game over
         0, 0, 0, 0, 0, 0, 0, 0, 0 // 9 unused bytes
     ];
 

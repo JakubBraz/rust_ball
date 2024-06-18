@@ -50,8 +50,8 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                                 match waiting_board_id {
                                     None => {
                                         let new_board_id: u32 = random();
-                                        // let left_or_right: bool = random();
-                                        let left_or_right: bool = true;
+                                        let left_or_right: bool = random();
+                                        // let left_or_right: bool = true;
                                         match left_or_right {
                                             true => boards.insert(new_board_id, (Some(inp.player_id), None)),
                                             false => boards.insert(new_board_id, (None, Some(inp.player_id)))
