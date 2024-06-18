@@ -16,6 +16,8 @@ async fn main() {
     // println!("{:?}", game_logic::physics::diff(30, 3));
 
     let mut s = GamePhysics::init();
+    s.add_player1();
+    s.add_player2();
     let mut first_touch: (f32, f32) = (0.0, 0.0);
     let mut vec_x = 0.0;
     let mut vec_y = 0.0;

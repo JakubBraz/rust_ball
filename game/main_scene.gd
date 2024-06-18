@@ -41,9 +41,7 @@ func _process(delta):
 		$vector_container.scale = Vector3(len * TOUCH_SCALLING, 1, 1)
 		#$vector_container.scale = Vector3(MAX_TOUCH_LEN_GAME, 1, 1)
 		$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
-		var vec_pos = $player.position if is_left else $player2.position
-		print("Is LEFT??? ", is_left)
-		$vector_container.position = vec_pos
+		$vector_container.position = $player.position if is_left else $player2.position
 		
 		var d = (prev_touch - pos).length()
 		#print("distance", d)

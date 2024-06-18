@@ -44,7 +44,14 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                 match boards.get_mut(&board_id) {
                     None => {
                         println!("NEW GAME");
-                        boards.insert(board_id, (GamePhysics::init(), game_duration.elapsed()));
+                        let mut g = GamePhysics::init();
+                        if player_left.is_some() {
+                            g.add_player1();
+                        }
+                        else {
+                            g.add_player2();
+                        }
+                        boards.insert(board_id, (g, game_duration.elapsed()));
                         //todo send state to socket just after creation?
                     }
                     Some((game_physics, last_update)) => {
@@ -68,6 +75,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
 }
 
 fn process_input(is_left: bool, addr: SocketAddr, inp: PlayerInput, socket: &UdpSocket, game_physics: &mut GamePhysics, last_update: &mut Duration, game_duration: Instant, step: Duration) {
+    //todo use index 1, 2 for left player and 3, 4 for the right one
     game_physics.move_mouse(if is_left { 0 } else { 1 }, inp.vec_x, inp.vec_y);
 
     let mut physics_updated = false;

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use rapier2d::na::Rotation2;
 use rapier2d::prelude::*;
@@ -28,10 +29,10 @@ pub struct GamePhysics {
 
     active_forces: [bool; 4],
 
-    players: Vec<(RigidBodyHandle, ColliderHandle, Vector<f32>, bool)>,
+    players: HashMap<u8, (RigidBodyHandle, ColliderHandle, Vector<f32>, bool)>,
 }
 
-fn create_player(gp: &mut GamePhysics, x: f32, y: f32) {
+fn create_player(gp: &mut GamePhysics, x: f32, y: f32, player_ind: u8) {
     let rigid_body = RigidBodyBuilder::dynamic()
         .translation(vector![x, y])
         .linear_damping(1.0)
@@ -40,7 +41,7 @@ fn create_player(gp: &mut GamePhysics, x: f32, y: f32) {
     let player_handle = gp.rigid_body_set.insert(rigid_body);
     let collider_handler = gp.collider_set
         .insert_with_parent(collider, player_handle, &mut gp.rigid_body_set);
-    gp.players.push((player_handle, collider_handler, vector![0.0, 0.0], false));
+    gp.players.insert(player_ind, (player_handle, collider_handler, vector![0.0, 0.0], false));
 }
 
 impl GamePhysics {
@@ -118,9 +119,6 @@ impl GamePhysics {
             .insert_with_parent(collider, player2_handle, &mut gp.rigid_body_set);
         gp.player2_handle = player2_handle;
 
-        create_player(&mut gp, 10.0, 15.0);
-        create_player(&mut gp, 30.0,  15.0);
-
         // create ball
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![10.0, 10.0])
@@ -158,7 +156,7 @@ impl GamePhysics {
         player2.add_force(force, true);
 
         // move players and kick the ball
-        for (handle, collider_handle, touch_vector, after_kick) in &mut self.players {
+        for (handle, collider_handle, touch_vector, after_kick) in &mut self.players.values_mut() {
             let mut player = &mut self.rigid_body_set[*handle];
             player.reset_forces(true);
             if player.linvel().norm() < touch_vector.norm() {
@@ -228,11 +226,15 @@ impl GamePhysics {
         (p.translation().x, p.translation().y, *radius)
     }
 
-    pub fn get_player(&self, i: usize) -> (f32, f32, f32) {
-        let (handle, collider_handle, _, _) = self.players[i];
-        let p = &self.rigid_body_set[handle];
-        let radius = &self.collider_set[collider_handle].shape().as_ball().unwrap().radius;
-        (p.translation().x, p.translation().y, *radius)
+    pub fn get_player(&self, i: u8) -> (f32, f32, f32) {
+        match self.players.get(&i) {
+            None => (0.0, 0.0, 0.0),
+            Some((handle, collider_handle, _, _)) => {
+                let p = &self.rigid_body_set[*handle];
+                let radius = &self.collider_set[*collider_handle].shape().as_ball().unwrap().radius;
+                (p.translation().x, p.translation().y, *radius)
+            }
+        }
     }
 
     pub fn apply_impulse(&mut self, x: f32, y: f32) {
@@ -247,16 +249,20 @@ impl GamePhysics {
         self.rigid_body_set[self.player2_handle].reset_forces(true);
     }
 
-    pub fn move_mouse(&mut self, i: usize, vec_x: f32, vec_y: f32) {
-        let (_, _, touch_vector, after_kick) = &mut self.players[i];
-        if vec_x == 0.0 && vec_y == 0.0 {
-            *after_kick = false;
-        }
-        let mut v = vector![vec_x, vec_y];
-        if v.norm() > 1.0 {
-            v = v.normalize();
-        }
-        *touch_vector = v * MAX_VEC;
+    pub fn move_mouse(&mut self, i: u8, vec_x: f32, vec_y: f32) {
+        match &mut self.players.get_mut(&i) {
+            None => println!("No player found on index {}", i),
+            Some((_, _, touch_vector, after_kick)) => {
+                if vec_x == 0.0 && vec_y == 0.0 {
+                    *after_kick = false;
+                }
+                let mut v = vector![vec_x, vec_y];
+                if v.norm() > 1.0 {
+                    v = v.normalize();
+                }
+                *touch_vector = v * MAX_VEC;
+            }
+        };
     }
 
     pub fn player_input(&mut self, keys: [bool; 4]) {
@@ -283,5 +289,13 @@ impl GamePhysics {
         let (player2_x, player2_y, player2_r) = self.get_player(1);
         let (_, _, _, ball_x, ball_y, ball_r) = self.player();
         (ball_x, ball_y, player1_x, player1_y, player2_x, player2_y)
+    }
+
+    pub fn add_player1(&mut self) {
+        create_player(self, 10.0, 15.0, 0);
+    }
+
+    pub fn add_player2(&mut self) {
+        create_player(self, 30.0,  15.0, 1);
     }
 }
