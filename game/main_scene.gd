@@ -35,12 +35,15 @@ func _process(delta):
 	
 	if start_touch != Vector2():
 		var pos = get_viewport().get_mouse_position()
+		var camera_angle = get_viewport().get_camera_3d().rotation[1]
 		var touch_vec = pos - start_touch
+		touch_vec = touch_vec.rotated(-camera_angle)
 		var len = min(MAX_TOUCH_LEN_SCREEN, touch_vec.length())
 		var normalized_touch = touch_vec.normalized() * (len / MAX_TOUCH_LEN_SCREEN)
 		$vector_container.scale = Vector3(len * TOUCH_SCALLING, 1, 1)
 		#$vector_container.scale = Vector3(MAX_TOUCH_LEN_GAME, 1, 1)
 		$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
+		#$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
 		$vector_container.position = $player.position if is_left else $player2.position
 		
 		var d = (prev_touch - pos).length()
