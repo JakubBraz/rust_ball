@@ -14,3 +14,5 @@ rust/game_logic/Cargo.lock
 *.pdb
 
 .idea
+
+exported/

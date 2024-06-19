@@ -157,7 +157,7 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, socket: UdpSocke
                 match packet {
                     Ok(p) => {
                         let player_id = client_address;
-                        match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage {player_id,  input: PlayerInput{ vec_x: p.touch_vec_x, vec_y: p.touch_vec_y }})) {
+                        match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id,  input: PlayerInput{ vec_x: p.touch_vec_x, vec_y: p.touch_vec_y }})) {
                             Ok(val) => {}
                             Err(err) => {
                                 println!("Cannot send: {}", err);

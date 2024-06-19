@@ -19,7 +19,7 @@ pub struct PlayerInput {
 #[derive(Debug)]
 pub struct PlayerMessage {
     // todo socket addr as player id, is it a good idea?
-    pub player_id: SocketAddr,
+    pub player_socket: SocketAddr,
     pub input: PlayerInput,
 }
 
@@ -45,7 +45,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                 match val {
                     PlayersStateMessage::PlayerInput(inp) => {
                         println!("Player input set");
-                        match inputs.insert(inp.player_id, inp.input) {
+                        match inputs.insert(inp.player_socket, inp.input) {
                             None => {
                                 match waiting_board_id {
                                     None => {
@@ -53,10 +53,11 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                                         let left_or_right: bool = random();
                                         // let left_or_right: bool = true;
                                         match left_or_right {
-                                            true => boards.insert(new_board_id, (Some(inp.player_id), None)),
-                                            false => boards.insert(new_board_id, (None, Some(inp.player_id)))
+                                            true => boards.insert(new_board_id, (Some(inp.player_socket), None)),
+                                            false => boards.insert(new_board_id, (None, Some(inp.player_socket)))
                                         };
                                         boards_to_update.push_back(new_board_id);
+                                        waiting_board_id = Some(new_board_id);
                                     }
                                     Some(board_id) => {
                                         let sockets = match boards.get(&board_id) {
@@ -64,8 +65,8 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                                             Some(v) => v
                                         };
                                         let new_sockets = match sockets.0 {
-                                            None => (Some(inp.player_id), sockets.1),
-                                            Some(s) => (Some(s), Some(inp.player_id))
+                                            None => (Some(inp.player_socket), sockets.1),
+                                            Some(s) => (Some(s), Some(inp.player_socket))
                                         };
                                         boards.insert(board_id, new_sockets);
                                         waiting_board_id = None;
