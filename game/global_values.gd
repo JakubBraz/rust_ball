@@ -21,8 +21,8 @@ var packet_id = 0
 func _ready():
 	print("Game start!")
 	socket = PacketPeerUDP.new()
-	socket.set_dest_address("127.0.0.1", 8019)
-	#socket.set_dest_address("20.215.53.164", 8019)
+	#socket.set_dest_address("127.0.0.1", 8019)
+	socket.set_dest_address("20.215.53.164", 8019)
 	#socket.set_dest_address("172.27.181.206", 8019)
 	#socket.connect_to_host("127.0.0.1", 8019)
 

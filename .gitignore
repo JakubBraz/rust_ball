@@ -15,4 +15,4 @@ rust/game_logic/Cargo.lock
 
 .idea
 
-#exported/
+exported/

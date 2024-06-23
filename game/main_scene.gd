@@ -59,7 +59,15 @@ func _process(delta):
 		#global_values.send_input(message_id, joypad_vector)
 
 	# todo move reading packet to global_values
-	var p = global_values.socket.get_packet()
+	var prev_p = [0]
+	var p = [0]
+	var packets_read = 0
+	while len(p) > 0:
+		packets_read += 1
+		prev_p = p
+		p = global_values.socket.get_packet()
+	p = prev_p if packets_read > 1 else []
+	
 	if len(p) > 0:
 		print(global_values.game_time, ", get_packet: ", p, " ", p.get_string_from_ascii())
 		var player_x = p.decode_float(16);

@@ -23,4 +23,5 @@ GlobalValues="*res://global_values.gd"
 [rendering]
 
 renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.301961, 0.301961, 0.301961, 1)
