@@ -63,13 +63,17 @@ func _process(delta):
 	var p = [0]
 	var packets_read = 0
 	while len(p) > 0:
-		packets_read += 1
-		prev_p = p
 		p = global_values.socket.get_packet()
-	p = prev_p if packets_read > 1 else []
-	
+		var packet_type = p.decode_u16(2);
+		if packet_type == 1:
+			print("Pong received")
+		elif packet_type == 2:
+			packets_read += 1
+			prev_p = p
+
+	p = prev_p if packets_read >= 1 else []
 	if len(p) > 0:
-		print(global_values.game_time, ", get_packet: ", p, " ", p.get_string_from_ascii())
+		#print(global_values.game_time, ", get_packet: ", p, " ", p.get_string_from_ascii())
 		var player_x = p.decode_float(16);
 		var player_y = p.decode_float(20);
 		var player2_x = p.decode_float(32);
@@ -94,7 +98,7 @@ func _process(delta):
 			$player2.position = Vector3(player2_x, $player2.position[1], player2_y)
 			
 		$ball.position = Vector3(ball_x, $ball.position[1], ball_y)
-		
+
 
 func _input(event):
 	if (event is InputEventMouseButton):

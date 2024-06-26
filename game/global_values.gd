@@ -1,7 +1,7 @@
 extends Node
 
 var socket
-var ping_freq = 20.0
+var ping_freq = 10.0
 var packet_out = PackedByteArray([
 	13, 178, # constant value, always the same
 	2, 0, # packet type, 1 = ping, 2 = input / game state
@@ -21,8 +21,8 @@ var packet_id = 0
 func _ready():
 	print("Game start!")
 	socket = PacketPeerUDP.new()
-	#socket.set_dest_address("127.0.0.1", 8019)
-	socket.set_dest_address("20.215.53.164", 8019)
+	socket.set_dest_address("127.0.0.1", 8019)
+	#socket.set_dest_address("20.215.53.164", 8019)
 	#socket.set_dest_address("172.27.181.206", 8019)
 	#socket.connect_to_host("127.0.0.1", 8019)
 
@@ -42,6 +42,7 @@ func _process(delta):
 
 func send_input(message_id, v):
 	var bytes  = packet_out
+	bytes.encode_u16(2, 2)
 	bytes.encode_u32(4, player_id)
 	bytes.encode_u32(8, message_id)
 	# todo dont send those zeros, the same as previous todo

@@ -7,9 +7,12 @@ use std::sync::mpsc::{Sender, SendError};
 use std::time::Instant;
 use crate::players_state::{PlayerInput, PlayerMessage, PlayersStateMessage};
 use crate::game_state::GameState;
+use crate::ping_handler;
+use crate::ping_handler::PingMessage;
 
 const CONSTANT_VALUE: u16 = 45_581;
 const GAME_TYPE_STATE: u16 = 2;
+const GAME_TYPE_PONG: u16 = 1;
 
 const PACKET_IN_LEN: usize = 32;
 const PACKET_OUT_LEN: usize = 64;
@@ -34,41 +37,41 @@ struct PacketIn {
     unused: [u8; 12]
 }
 
-#[derive(Default)]
-pub struct PacketOut {
-    const_val: u16,
-    packet_type: u16,
-    seq_num: u32,
-    // ball_x: f32,
-    // ball_y: f32,
-    // player_1_1_x: f32,
-    // player_1_1_y: f32,
-    // player_1_2_x: f32,
-    // player_1_2_y: f32,
-    // player_2_1_x: f32,
-    // player_2_1_y: f32,
-    // player_2_2_x: f32,
-    // player_2_2_y: f32,
-    // score1: u16,
-    // score2: u16,
-    // time: u16,
-    // kicks_game_over_bool: u8,
-    unused: [u8; 9],
-}
-
-impl PacketOut {
-    pub fn pong() -> PacketOut {
-        let mut p: PacketOut = Default::default();
-        p.packet_type = 1;
-        p
-    }
-
-    pub fn state(state: GameState) -> PacketOut {
-        let mut p = PacketOut::default();
-        p.packet_type = 2;
-        p
-    }
-}
+// #[derive(Default)]
+// pub struct PacketOut {
+//     const_val: u16,
+//     packet_type: u16,
+//     seq_num: u32,
+//     // ball_x: f32,
+//     // ball_y: f32,
+//     // player_1_1_x: f32,
+//     // player_1_1_y: f32,
+//     // player_1_2_x: f32,
+//     // player_1_2_y: f32,
+//     // player_2_1_x: f32,
+//     // player_2_1_y: f32,
+//     // player_2_2_x: f32,
+//     // player_2_2_y: f32,
+//     // score1: u16,
+//     // score2: u16,
+//     // time: u16,
+//     // kicks_game_over_bool: u8,
+//     unused: [u8; 9],
+// }
+//
+// impl PacketOut {
+//     pub fn pong() -> PacketOut {
+//         let mut p: PacketOut = Default::default();
+//         p.packet_type = 1;
+//         p
+//     }
+//
+//     pub fn state(state: GameState) -> PacketOut {
+//         let mut p = PacketOut::default();
+//         p.packet_type = 2;
+//         p
+//     }
+// }
 
 pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
     let score1: u16 = 0;
@@ -143,7 +146,7 @@ pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
     out_packet
 }
 
-pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, socket: UdpSocket) {
+pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sender<ping_handler::PingMessage>, socket: UdpSocket) {
     let mut buf = [0; 32];
 
     let mut player_waiting: Option<PlayerId> = None;
@@ -156,12 +159,20 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, socket: UdpSocke
                 let packet = decode_inbound_packet(len, &buf);
                 match packet {
                     Ok(p) => {
-                        let player_id = client_address;
-                        match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id,  input: PlayerInput{ vec_x: p.touch_vec_x, vec_y: p.touch_vec_y }})) {
-                            Ok(val) => {}
-                            Err(err) => {
-                                println!("Cannot send: {}", err);
+                        if p.packet_type == GAME_TYPE_PONG {
+                            pong_sender.send(PingMessage::PingReceived(client_address));
+                        }
+                        else if p.packet_type == GAME_TYPE_STATE {
+                            let player_id = client_address;
+                            match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
+                                Ok(val) => {}
+                                Err(err) => {
+                                    println!("Cannot send: {}", err);
+                                }
                             }
+                        }
+                        else {
+                            println!("Unknown packet type: {}", p.packet_type);
                         }
                     }
                     Err(e) => {
@@ -201,4 +212,15 @@ fn decode_inbound_packet(len: usize, bytes: &[u8; 32]) -> Result<PacketIn, Box<d
     }
 
     Ok(packet)
+}
+
+pub fn pong_message() -> [u8; PACKET_OUT_LEN]{
+    let mut bytes: [u8; PACKET_OUT_LEN] = [0; PACKET_OUT_LEN];
+
+    // out_packet[0..2].clone_from_slice(CONSTANT_VALUE.to_le_bytes().as_slice());
+    // out_packet[2..4].clone_from_slice(GAME_TYPE_STATE.to_le_bytes().as_slice());
+
+    bytes[0..2].clone_from_slice(&CONSTANT_VALUE.to_le_bytes());
+    bytes[2..4].clone_from_slice(&GAME_TYPE_PONG.to_le_bytes());
+    bytes
 }
