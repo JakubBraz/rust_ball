@@ -2,8 +2,9 @@ use std::sync::mpsc::{Sender, SendError};
 use std::thread::sleep;
 use std::time::Duration;
 use crate::ping_handler::PingMessage;
+use crate::players_state::PlayersStateMessage;
 
-pub fn handle_timer(ping_sender: Sender<PingMessage>) {
+pub fn handle_timer(ping_sender: Sender<PingMessage>, player_state_sender: Sender<PlayersStateMessage>) {
     let sleep_time = Duration::from_millis(1000);
 
     loop {
@@ -11,6 +12,17 @@ pub fn handle_timer(ping_sender: Sender<PingMessage>) {
             Ok(_) => {}
             Err(e) => println!("Cannot send pong message, error: {}", e)
         };
+
+        match ping_sender.send(PingMessage::PingStateMonitor) {
+            Ok(_) => {}
+            Err(e) => println!("Cannot send ping monitor, error: {}", e)
+        };
+
+        match player_state_sender.send(PlayersStateMessage::PlayerStateMonitor) {
+            Ok(_) => {}
+            Err(e) => println!("Cannot send player monitor, error: {}", e)
+        }
+
         sleep(sleep_time);
     }
 }

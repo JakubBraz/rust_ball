@@ -37,13 +37,13 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
         send_to_input.send(PlayersStateMessage::GetGameId(tx.clone())).unwrap();
         match rx.recv().unwrap() {
             None => {
-                println!("Nothing to update");
+                // println!("Nothing to update");
                 sleep(Duration::from_millis(500));
             }
-            Some((board_id, player_left, player_right)) => {
+            Some((board_id, players_vec)) => {
                 match boards.get_mut(&board_id) {
                     None => {
-                        println!("NEW GAME");
+                        // println!("NEW GAME");
                         let mut g = GamePhysics::init();
                         g.add_player1();
                         g.add_player2();
@@ -57,31 +57,26 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                         //todo send state to socket just after creation?
                     }
                     Some((game_physics, last_update)) => {
-                        //todo updating game state should be done after sending inputs (but maybe it doesnt matter too much)
-                        let mut physics_updated = false;
-                        while game_duration.elapsed() - *last_update >= step {
-                            // println!("{:?} STEP", game_duration.elapsed());
-                            //todo count physics stepped performed to measure if it happens every 1/60 sec
-                            game_physics.step();
-                            *last_update += step;
-                            physics_updated = true;
+                        if players_vec.is_empty() {
+                            boards.remove(&board_id);
                         }
-
-                        if player_left.is_some() {
-                            let (addr, inp) = player_left.unwrap();
-                            //todo use index 1, 2 for left player and 3, 4 for the right one
-                            game_physics.move_mouse(0, inp.vec_x, inp.vec_y);
-                            if physics_updated {
-                                send_game_state(true, addr, &socket, game_physics);
+                        else {
+                            //todo updating game state should be done after sending inputs (but maybe it doesnt matter too much)
+                            let mut physics_updated = false;
+                            while game_duration.elapsed() - *last_update >= step {
+                                // println!("{:?} STEP", game_duration.elapsed());
+                                //todo count physics stepped performed to measure if it happens every 1/60 sec
+                                game_physics.step();
+                                *last_update += step;
+                                physics_updated = true;
                             }
-                        }
 
-                        if player_right.is_some() {
-                            let (addr, inp) = player_right.unwrap();
-                            //todo use index 1, 2 for left player and 3, 4 for the right one
-                            game_physics.move_mouse(1, inp.vec_x, inp.vec_y);
-                            if physics_updated {
-                                send_game_state(false, addr, &socket, game_physics);
+                            for (i, &(addr, inp, is_left)) in players_vec.iter().enumerate() {
+                                //todo use index 1, 2 for left player and 3, 4 for the right one
+                                game_physics.move_mouse(if is_left { 0 } else { 1 }, inp.vec_x, inp.vec_y);
+                                if physics_updated {
+                                    send_game_state(is_left, addr, &socket, game_physics);
+                                }
                             }
                         }
                     }

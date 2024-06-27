@@ -1,17 +1,20 @@
 use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
-use std::sync::mpsc::{Receiver, RecvError};
+use std::sync::mpsc::{Receiver, RecvError, Sender, SendError};
 use std::time::{Duration, Instant};
 use crate::game_packet;
+use crate::players_state::PlayersStateMessage;
 
 const TIME_TO_REMOVE: Duration = Duration::from_secs(30);
 
 pub enum PingMessage {
     CheckPings,
-    PingReceived(SocketAddr)
+    PingReceived(SocketAddr),
+    PingStateMonitor,
 }
 
-pub fn handle_ping(receiver: Receiver<PingMessage>, socket: UdpSocket) {
+pub fn handle_ping(receiver: Receiver<PingMessage>, player_state_sender: Sender<PlayersStateMessage>, socket: UdpSocket) {
+    //todo it would be better to move all that logic into "player_state" module
     let mut received_pings: HashMap<SocketAddr, Instant> = HashMap::new();
 
     loop {
@@ -20,7 +23,10 @@ pub fn handle_ping(receiver: Receiver<PingMessage>, socket: UdpSocket) {
                 PingMessage::CheckPings => {
                     received_pings = received_pings.iter()
                         .filter_map(|(&addr, &t)| if t.elapsed() > TIME_TO_REMOVE {
-                            //todo send "player_state RemovePlayer"
+                            match player_state_sender.send(PlayersStateMessage::RemovePlayer(addr)) {
+                                Ok(_) => {}
+                                Err(e) => println!("Cannot send remove player, error: {:?}", e)
+                            };
                             None
                         } else { Some((addr, t)) })
                         .collect();
@@ -33,6 +39,9 @@ pub fn handle_ping(receiver: Receiver<PingMessage>, socket: UdpSocket) {
                         Ok(_) => {}
                         Err(e) => println!("Cannot send pong message, error: {}", e)
                     };
+                }
+                PingMessage::PingStateMonitor => {
+                    println!("Ping monitor, received ping len: {}", received_pings.len());
                 }
             },
             Err(e) => println!("Cannot receive ping, error: {}", e)

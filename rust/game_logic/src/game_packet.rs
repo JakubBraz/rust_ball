@@ -149,10 +149,8 @@ pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
 pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sender<ping_handler::PingMessage>, socket: UdpSocket) {
     let mut buf = [0; 32];
 
-    let mut player_waiting: Option<PlayerId> = None;
-
     loop {
-        println!("Reading socket...");
+        // println!("Reading socket...");
         match socket.recv_from(&mut buf) {
             Ok((len, client_address)) => {
                 let i = Instant::now();
@@ -160,7 +158,10 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sen
                 match packet {
                     Ok(p) => {
                         if p.packet_type == GAME_TYPE_PONG {
-                            pong_sender.send(PingMessage::PingReceived(client_address));
+                            match pong_sender.send(PingMessage::PingReceived(client_address)) {
+                                Ok(_) => {}
+                                Err(e) => println!("Cannot send ping message, error: {}", e)
+                            };
                         }
                         else if p.packet_type == GAME_TYPE_STATE {
                             let player_id = client_address;
@@ -179,7 +180,7 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sen
                         println!("Error decoding packet: {}", e);
                     }
                 }
-                println!("handling_socket takes {:?}", i.elapsed());
+                // println!("handling_socket takes {:?}", i.elapsed());
             }
             Err(e) => {
                 println!("Error kind: {}, error: {}", e.kind(), e);
@@ -195,7 +196,7 @@ fn decode_inbound_packet(len: usize, bytes: &[u8; 32]) -> Result<PacketIn, Box<d
         return Err(Box::from("Wrong packet len"));
     }
 
-    println!("{} bytes read, message: {:?}", len, bytes);
+    // println!("{} bytes read, message: {:?}", len, bytes);
 
     let packet = PacketIn {
         const_val: u16::from_ne_bytes(bytes[0..2].try_into()?),
