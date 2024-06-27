@@ -1,6 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::net::SocketAddr;
 use std::sync::mpsc::{Receiver, RecvError, Sender, SendError};
+use log::{debug, error, info};
 use rand::random;
 
 
@@ -50,6 +51,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                             None => {
                                 match waiting_board_id {
                                     None => {
+                                        debug!("Inserting player_state board");
                                         let new_board_id: u32 = random();
                                         let left_or_right: bool = random();
                                         // let left_or_right: bool = true;
@@ -59,6 +61,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                                     }
                                     Some(board_id) => {
                                         let sockets_vec = match boards.get_mut(&board_id) {
+                                            //todo this panic happens, fix it, do nothing if there is no board_id in the map
                                             None => panic!("Should not happen"),
                                             Some(v) => v
                                         };
@@ -75,6 +78,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                     }
                     PlayersStateMessage::AddPlayer(_) => {todo!("implement")}
                     PlayersStateMessage::RemovePlayer(s) => {
+                        debug!("Removing player_state input");
                         inputs.remove(&s);
                     }
                     PlayersStateMessage::GetGameId(response_sender) => {
@@ -100,16 +104,16 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
 
                         match response_sender.send(resp) {
                             Ok(_) => {}
-                            Err(e) => println!("Cannot send response: {}", e)
+                            Err(e) => error!("Cannot send response: {}", e)
                         };
                     }
                     PlayersStateMessage::PlayerStateMonitor => {
-                        println!("Player state monitor, inputs: {}, boards: {}, board_queue: {}", inputs.len(), boards.len(), boards_to_update.len());
+                        info!("Player state monitor, inputs: {}, boards: {}, board_queue: {}", inputs.len(), boards.len(), boards_to_update.len());
                     }
                 }
             }
             Err(err) => {
-                println!("Input error {}", err);
+                error!("Input error {}", err);
             }
         }
     }

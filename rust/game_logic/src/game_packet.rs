@@ -5,6 +5,7 @@ use std::net::UdpSocket;
 use std::string::ParseError;
 use std::sync::mpsc::{Sender, SendError};
 use std::time::Instant;
+use log::error;
 use crate::players_state::{PlayerInput, PlayerMessage, PlayersStateMessage};
 use crate::game_state::GameState;
 use crate::ping_handler;
@@ -160,7 +161,7 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sen
                         if p.packet_type == GAME_TYPE_PONG {
                             match pong_sender.send(PingMessage::PingReceived(client_address)) {
                                 Ok(_) => {}
-                                Err(e) => println!("Cannot send ping message, error: {}", e)
+                                Err(e) => error!("Cannot send ping message, error: {}", e)
                             };
                         }
                         else if p.packet_type == GAME_TYPE_STATE {
@@ -168,23 +169,23 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sen
                             match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
                                 Ok(val) => {}
                                 Err(err) => {
-                                    println!("Cannot send: {}", err);
+                                    error!("Cannot send: {}", err);
                                 }
                             }
                         }
                         else {
-                            println!("Unknown packet type: {}", p.packet_type);
+                            error!("Unknown packet type: {}", p.packet_type);
                         }
                     }
                     Err(e) => {
-                        println!("Error decoding packet: {}", e);
+                        error!("Error decoding packet: {}", e);
                     }
                 }
                 // println!("handling_socket takes {:?}", i.elapsed());
             }
             Err(e) => {
-                println!("Error kind: {}, error: {}", e.kind(), e);
-                println!("Local addr, peer addr: {:?} {:?}", socket.local_addr(), socket.peer_addr());
+                error!("Error kind: {}, error: {}", e.kind(), e);
+                error!("Local addr, peer addr: {:?} {:?}", socket.local_addr(), socket.peer_addr());
                 panic!("error");
             }
         }

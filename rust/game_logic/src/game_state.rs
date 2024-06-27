@@ -4,6 +4,7 @@ use std::net::{SocketAddr, UdpSocket};
 use std::sync::mpsc::{channel, Sender};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
+use log::{debug, error};
 use crate::game_packet;
 use crate::physics::GamePhysics;
 use crate::players_state::{PlayerInput, PlayersStateMessage};
@@ -43,7 +44,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
             Some((board_id, players_vec)) => {
                 match boards.get_mut(&board_id) {
                     None => {
-                        // println!("NEW GAME");
+                        debug!("Creating new game_state board");
                         let mut g = GamePhysics::init();
                         g.add_player1();
                         g.add_player2();
@@ -58,6 +59,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                     }
                     Some((game_physics, last_update)) => {
                         if players_vec.is_empty() {
+                            debug!("Removing game_state board");
                             boards.remove(&board_id);
                         }
                         else {
@@ -112,7 +114,7 @@ fn send_game_state(is_left: bool, addr: SocketAddr, socket: &UdpSocket, game_phy
             // println!("{} bytes sent", b);
         }
         Err(e) => {
-            println!("Cannot send, {}", e);
+            error!("Cannot send, {}", e);
             panic!("Cannot send to socket!");
         }
     }

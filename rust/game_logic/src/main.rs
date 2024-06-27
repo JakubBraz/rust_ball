@@ -15,12 +15,20 @@ use std::sync::mpsc::{channel, Receiver, RecvError, Sender, SendError};
 use std::thread::{current, sleep, spawn};
 use std::time::{Duration, Instant};
 use rapier2d::counters::Timer;
+use log::{debug, error, info, LevelFilter, log, trace, warn};
+use std::io::Write;
 use crate::game_packet::handle_socket;
 use crate::game_state::handle_game_state;
 use crate::physics::GamePhysics;
 use crate::players_state::{handle_players_state, PlayersStateMessage};
 
 fn main() {
+    env_logger::builder()
+        .filter_level(LevelFilter::Trace)
+        .format_timestamp_millis()
+        // .format(|buff, record| writeln!(buff, "[{} {} {}]\n    {}", buff.timestamp_millis(), record.level(), record.target(), record.args()))
+        .init();
+
     let (tx_input, rx_input) = channel();
     let (tx_ping_pong, rx_ping_pong) = channel();
 

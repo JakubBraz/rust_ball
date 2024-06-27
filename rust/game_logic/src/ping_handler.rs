@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::mpsc::{Receiver, RecvError, Sender, SendError};
 use std::time::{Duration, Instant};
+use log::{debug, error, info};
 use crate::game_packet;
 use crate::players_state::PlayersStateMessage;
 
@@ -25,7 +26,7 @@ pub fn handle_ping(receiver: Receiver<PingMessage>, player_state_sender: Sender<
                         .filter_map(|(&addr, &t)| if t.elapsed() > TIME_TO_REMOVE {
                             match player_state_sender.send(PlayersStateMessage::RemovePlayer(addr)) {
                                 Ok(_) => {}
-                                Err(e) => println!("Cannot send remove player, error: {:?}", e)
+                                Err(e) => error!("Cannot send remove player, error: {:?}", e)
                             };
                             None
                         } else { Some((addr, t)) })
@@ -37,14 +38,14 @@ pub fn handle_ping(receiver: Receiver<PingMessage>, player_state_sender: Sender<
                     let bytes = game_packet::pong_message();
                     match socket.send_to(&bytes, peer_addr) {
                         Ok(_) => {}
-                        Err(e) => println!("Cannot send pong message, error: {}", e)
+                        Err(e) => error!("Cannot send pong message, error: {}", e)
                     };
                 }
                 PingMessage::PingStateMonitor => {
-                    println!("Ping monitor, received ping len: {}", received_pings.len());
+                    info!("Ping monitor, received ping len: {}", received_pings.len());
                 }
             },
-            Err(e) => println!("Cannot receive ping, error: {}", e)
+            Err(e) => error!("Cannot receive ping, error: {}", e)
         };
     }
 }
