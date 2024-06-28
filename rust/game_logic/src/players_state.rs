@@ -80,6 +80,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>) {
                     PlayersStateMessage::RemovePlayer(s) => {
                         debug!("Removing player_state input");
                         inputs.remove(&s);
+                        waiting_board_id = None;
                     }
                     PlayersStateMessage::GetGameId(response_sender) => {
                         let resp: Option<(u32, Vec<(SocketAddr, PlayerInput, bool)>)> = match boards_to_update.pop_front() {
