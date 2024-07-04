@@ -8,8 +8,6 @@ use std::time::Instant;
 use log::error;
 use crate::players_state::{PlayerInput, PlayerMessage, PlayersStateMessage};
 use crate::game_state::GameState;
-use crate::ping_handler;
-use crate::ping_handler::PingMessage;
 
 const CONSTANT_VALUE: u16 = 45_581;
 const GAME_TYPE_STATE: u16 = 2;
@@ -35,7 +33,8 @@ struct PacketIn {
     message_id: u32,
     touch_vec_x: f32,
     touch_vec_y: f32,
-    unused: [u8; 12]
+    room_choice: u16,
+    unused: [u8; 10]
 }
 
 // #[derive(Default)]
@@ -147,7 +146,7 @@ pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
     out_packet
 }
 
-pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sender<ping_handler::PingMessage>, socket: UdpSocket) {
+pub fn handle_socket(state_sender: Sender<PlayersStateMessage>, socket: UdpSocket) {
     let mut buf = [0; 32];
 
     loop {
@@ -159,14 +158,14 @@ pub fn handle_socket(input_sender: Sender<PlayersStateMessage>, pong_sender: Sen
                 match packet {
                     Ok(p) => {
                         if p.packet_type == GAME_TYPE_PONG {
-                            match pong_sender.send(PingMessage::PingReceived(client_address)) {
+                            match state_sender.send(PlayersStateMessage::PingReceived(client_address, p.room_choice)) {
                                 Ok(_) => {}
                                 Err(e) => error!("Cannot send ping message, error: {}", e)
                             };
                         }
                         else if p.packet_type == GAME_TYPE_STATE {
                             let player_id = client_address;
-                            match input_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
+                            match state_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
                                 Ok(val) => {}
                                 Err(err) => {
                                     error!("Cannot send: {}", err);
@@ -206,7 +205,8 @@ fn decode_inbound_packet(len: usize, bytes: &[u8; 32]) -> Result<PacketIn, Box<d
         message_id: u32::from_ne_bytes(bytes[8..12].try_into()?),
         touch_vec_x: f32::from_ne_bytes(bytes[12..16].try_into()?),
         touch_vec_y: f32::from_ne_bytes(bytes[16..20].try_into()?),
-        unused: bytes[20..32].try_into()?,
+        room_choice: u16::from_ne_bytes(bytes[20..22].try_into()?),
+        unused: bytes[22..32].try_into()?,
     };
 
     if packet.const_val != CONSTANT_VALUE {

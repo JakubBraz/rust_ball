@@ -49,7 +49,7 @@ func _process(delta):
 		var d = (prev_touch - pos).length()
 		#print("distance", d)
 		if d > 1:
-			print("touch ", pos)
+			#print("touch ", pos)
 			prev_touch = pos
 			message_id += 1
 			global_values.send_input(message_id, normalized_touch)

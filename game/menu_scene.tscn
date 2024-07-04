@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://851aiq0kta68"]
+
+[ext_resource type="Script" path="res://buton_quick_game.gd" id="1_pg0oh"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 32.0
+offset_right = 322.0
+offset_bottom = 186.0
+text = "Quick game"
+script = ExtResource("1_pg0oh")
