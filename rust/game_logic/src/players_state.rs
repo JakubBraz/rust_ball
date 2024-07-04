@@ -81,7 +81,8 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>, socket: UdpSocket
                     };
                 }
                 PlayersStateMessage::PlayerStateMonitor => {
-                    info!("Player state monitor, inputs: {}, boards: {}, board_queue: {}", inputs.len(), boards.len(), boards_to_update.len());
+                    info!("Player state monitor, inputs: {}, boards: {}, board_queue: {}, waiting_boards_len: {}",
+                        inputs.len(), boards.len(), boards_to_update.len(), waiting_boards.len());
                     info!("Ping monitor, received ping len: {}", received_pings.len());
                 }
                 PlayersStateMessage::CheckPings => {
