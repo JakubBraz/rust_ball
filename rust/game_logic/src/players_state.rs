@@ -89,7 +89,7 @@ pub fn handle_players_state(rx: Receiver<PlayersStateMessage>, socket: UdpSocket
                         .filter_map(|(&addr, &t)| if t.elapsed() > TIME_TO_REMOVE_PING {
                             debug!("Removing player_state input");
                             inputs.remove(&addr);
-                            waiting_boards = waiting_boards.iter().filter_map(|(&k, &(old_addr, b))| (addr == old_addr).then_some((k, (old_addr, b)))).collect();
+                            waiting_boards = waiting_boards.iter().filter_map(|(&k, &(old_addr, b))| (addr != old_addr).then_some((k, (old_addr, b)))).collect();
                             // waiting_board_id = None;
                             None
                         } else { Some((addr, t)) })
