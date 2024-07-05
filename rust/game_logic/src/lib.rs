@@ -1,5 +1,5 @@
-// todo handle those mods properly
-// pub mod physics;
+// this is needed only for the temporary macroquad based debug project
+pub mod physics;
 // mod game_state;
 // mod players_state;
 //
