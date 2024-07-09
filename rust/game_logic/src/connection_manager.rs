@@ -37,55 +37,52 @@ async fn handle_socket(mut stream: TcpStream, peer_addr: SocketAddr, sender: Sen
     loop {
         debug!("Reading tcp bytes...");
         match stream.read(&mut buff).await {
-            Ok(byte_len) => match room_id {
-                None => {
-                    debug!("{} bytes read: {:?}", byte_len, &buff[0..byte_len]);
-                    if byte_len < CLIENT_MESSAGE_LEN {
-                        info!("Disconnecting {}", peer_addr);
-                        send_remove_player(&sender, player_id);
-                        return;
-                    } else {
-                        let requested_room = u16::from_ne_bytes(buff);
-                        room_id = Some(requested_room);
-                        match sender.send(PlayersStateMessage::AddPlayer((tx.clone(), requested_room))) {
-                            Ok(_) => {}
-                            Err(e) => {
-                                error!("Cannot send AddPlayer message, error: {}", e);
-                                return;
-                            }
-                        };
+            Ok(byte_len) => {
+                debug!("{} bytes read: {:?}", byte_len, &buff[0..byte_len]);
+                if byte_len < CLIENT_MESSAGE_LEN {
+                    info!("Disconnecting {}", peer_addr);
+                    send_remove_player(&sender, player_id);
+                    return;
+                } else if room_id.is_some() {
+                    error!("Unexpected tcp message, ignoring");
+                } else {
+                    let requested_room = u16::from_ne_bytes(buff);
+                    room_id = Some(requested_room);
+                    match sender.send(PlayersStateMessage::AddPlayer((tx.clone(), requested_room))) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            error!("Cannot send AddPlayer message, error: {}", e);
+                            return;
+                        }
+                    };
 
-                        player_id = match rx.recv() {
-                            Ok(val) => Some(val),
-                            Err(e) => {
-                                error!("Cannot receive player id, error: {}", e);
-                                return;
-                            }
-                        };
+                    player_id = match rx.recv() {
+                        Ok(val) => Some(val),
+                        Err(e) => {
+                            error!("Cannot receive player id, error: {}", e);
+                            return;
+                        }
+                    };
 
-                        let p_id: u64 = player_id.unwrap();
+                    let p_id: u64 = player_id.unwrap();
 
-                        match stream.write_all(&p_id.to_ne_bytes()).await {
-                            Ok(_) => {
-                                match stream.flush().await {
-                                    Ok(_) => debug!("Player ID {} sent via TCP", p_id),
-                                    Err(e) => {
-                                        error!("Cannot flush TCP stream, error: {}", e);
-                                        send_remove_player(&sender, player_id);
-                                        return;
-                                    }
-                                };
-                            }
-                            Err(e) => {
-                                error!("Cannot write TCP bytes, error: {}", e);
-                                send_remove_player(&sender, player_id);
-                                return;
-                            }
-                        };
-                    }
-                }
-                Some(val) => {
-                    warn!("Unexpected TCP message: {:?}, room_id already received: {}", &buff[0..byte_len], val);
+                    match stream.write_all(&p_id.to_ne_bytes()).await {
+                        Ok(_) => {
+                            match stream.flush().await {
+                                Ok(_) => debug!("Player ID {} sent via TCP", p_id),
+                                Err(e) => {
+                                    error!("Cannot flush TCP stream, error: {}", e);
+                                    send_remove_player(&sender, player_id);
+                                    return;
+                                }
+                            };
+                        }
+                        Err(e) => {
+                            error!("Cannot write TCP bytes, error: {}", e);
+                            send_remove_player(&sender, player_id);
+                            return;
+                        }
+                    };
                 }
             }
             Err(e) => {
