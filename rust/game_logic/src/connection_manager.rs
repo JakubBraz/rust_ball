@@ -9,6 +9,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use crate::players_state::PlayersStateMessage;
 
+const CLIENT_MESSAGE_LEN: usize = 2;
+
 pub async fn handle_connections(sender: Sender<PlayersStateMessage>) {
     let listener = TcpListener::bind("0.0.0.0:8018").await.unwrap();
     loop {
@@ -26,7 +28,7 @@ pub async fn handle_connections(sender: Sender<PlayersStateMessage>) {
 }
 
 async fn handle_socket(mut stream: TcpStream, peer_addr: SocketAddr, sender: Sender<PlayersStateMessage>) {
-    let mut buff = [0; 2];
+    let mut buff = [0; CLIENT_MESSAGE_LEN];
     let mut room_id: Option<u16> = None;
     let (tx, rx) = channel();
 
@@ -34,12 +36,11 @@ async fn handle_socket(mut stream: TcpStream, peer_addr: SocketAddr, sender: Sen
 
     loop {
         debug!("Reading tcp bytes...");
-        // match stream.read(&mut buff).await {
-        match stream.read_exact(&mut buff).await {
+        match stream.read(&mut buff).await {
             Ok(byte_len) => match room_id {
                 None => {
                     debug!("{} bytes read: {:?}", byte_len, &buff[0..byte_len]);
-                    if byte_len == 0 {
+                    if byte_len < CLIENT_MESSAGE_LEN {
                         info!("Disconnecting {}", peer_addr);
                         send_remove_player(&sender, player_id);
                         return;
