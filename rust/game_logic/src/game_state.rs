@@ -67,12 +67,13 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                             //todo updating game state should be done after sending inputs (but maybe it doesnt matter too much)
                             let mut physics_updated = false;
                             while game_duration.elapsed() - *last_update >= step {
-                                // println!("{:?} STEP", game_duration.elapsed());
+                                // debug!("{:?} STEP", game_duration.elapsed());
                                 //todo count physics stepped performed to measure if it happens every 1/60 sec
                                 game_physics.step();
                                 *last_update += step;
                                 physics_updated = true;
                             }
+                            // debug!("After while");
 
                             for (i, &(addr, inp, is_left)) in players_vec.iter().enumerate() {
                                 //todo use index 1, 2 for left player and 3, 4 for the right one

@@ -1,12 +1,7 @@
 extends Button
 
+var global_values
 
 func _ready():
-	pressed.connect(change_scene)
-
-func _process(delta):
-	pass
-
-func change_scene():
-	print("Changing scene")
-	get_tree().change_scene_to_file("res://main_scene.tscn")
+	global_values = get_node("/root/GlobalValues")
+	pressed.connect(func(): global_values.change_scene(global_values.QUICK_GAME_ROOM_ID))

@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=3 uid="uid://b2hp17uwp2f2b"]
+
+[ext_resource type="Script" path="res://custom_game_scene.gd" id="1_7yt22"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7yt22")
+
+[node name="JoinGameButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 452.0
+offset_top = 488.0
+offset_right = 660.0
+offset_bottom = 558.0
+text = "Join game"
+
+[node name="RandomDigitsButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 503.0
+offset_top = 298.0
+offset_right = 598.0
+offset_bottom = 382.0
+
+[node name="Digit1" type="Button" parent="."]
+layout_mode = 0
+offset_left = 246.0
+offset_top = 113.0
+offset_right = 346.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 60
+text = "1"
+
+[node name="Digit2" type="Button" parent="."]
+offset_left = 421.0
+offset_top = 113.0
+offset_right = 521.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 60
+text = "1"
+
+[node name="Digit3" type="Button" parent="."]
+offset_left = 586.0
+offset_top = 113.0
+offset_right = 686.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 60
+text = "1"
+
+[node name="Digit4" type="Button" parent="."]
+offset_left = 757.0
+offset_top = 113.0
+offset_right = 857.0
+offset_bottom = 213.0
+theme_override_font_sizes/font_size = 60
+text = "1"

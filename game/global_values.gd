@@ -1,5 +1,12 @@
 extends Node
 
+#const IP_ADDR = "127.0.0.1"
+const IP_ADDR = "20.215.53.164"
+const UDP_PORT = 8019
+const TCP_PORT = 8018
+
+const QUICK_GAME_ROOM_ID = 13245
+
 var socket
 var ping_freq = 10.0
 var packet_out = PackedByteArray([
@@ -16,12 +23,7 @@ var game_time = 0.0
 var last_ping_time = -30.0
 var packet_id = 0
 
-var room_id = 12123
-
-#const IP_ADDR = "127.0.0.1"
-const IP_ADDR = "20.215.53.164"
-const UDP_PORT = 8019
-const TCP_PORT = 8018
+var room_id = QUICK_GAME_ROOM_ID
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -55,3 +57,8 @@ func send_input(message_id, v):
 	bytes.encode_float(14, v[0])
 	bytes.encode_float(18, v[1])
 	socket.put_packet(bytes)
+
+func change_scene(requested_room):
+	print("Changing scene")
+	room_id = requested_room
+	get_tree().change_scene_to_file("res://main_scene.tscn")
