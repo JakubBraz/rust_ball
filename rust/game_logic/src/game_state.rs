@@ -54,6 +54,7 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                         // else {
                         //     g.add_player2();
                         // }
+                        //todo move the state into player_state
                         boards.insert(board_id, (g, game_duration.elapsed()));
                         //todo send state to socket just after creation?
                     }
@@ -77,7 +78,11 @@ pub fn handle_game_state(send_to_input: Sender<PlayersStateMessage>, socket: Udp
                                 //todo use index 1, 2 for left player and 3, 4 for the right one
                                 game_physics.move_mouse(if is_left { 0 } else { 1 }, inp.vec_x, inp.vec_y);
                                 if physics_updated {
-                                    send_game_state(is_left, addr, &socket, game_physics);
+                                    match addr {
+                                        // None => debug!("Before input, no socket to send"),
+                                        None => {},
+                                        Some(val) => send_game_state(is_left, val, &socket, game_physics)
+                                    }
                                 }
                             }
                         }

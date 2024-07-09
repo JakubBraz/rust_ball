@@ -10,12 +10,6 @@ pub fn handle_timer(player_state_sender: Sender<PlayersStateMessage>) {
     let mut monitor_timer = Instant::now();
 
     loop {
-        //todo add different times for different messages, use heap for tracking event time
-        match player_state_sender.send(PlayersStateMessage::CheckPings) {
-            Ok(_) => {}
-            Err(e) => error!("Cannot send pong message, error: {}", e)
-        };
-
         if monitor_timer.elapsed() > monitor_time {
             monitor_timer = Instant::now();
             match player_state_sender.send(PlayersStateMessage::PlayerStateMonitor) {

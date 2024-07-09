@@ -5,7 +5,7 @@ use std::net::UdpSocket;
 use std::string::ParseError;
 use std::sync::mpsc::{Sender, SendError};
 use std::time::Instant;
-use log::error;
+use log::{debug, error};
 use crate::players_state::{PlayerInput, PlayerMessage, PlayersStateMessage};
 use crate::game_state::GameState;
 
@@ -16,8 +16,6 @@ const GAME_TYPE_PONG: u16 = 1;
 const PACKET_IN_LEN: usize = 32;
 const PACKET_OUT_LEN: usize = 64;
 
-// todo move it out of here
-type PlayerId = u32;
 
 pub enum PacketType {
     ClientHello(u32),
@@ -28,50 +26,12 @@ pub enum PacketType {
 
 struct PacketIn {
     const_val: u16,
-    packet_type: u16,
-    player_id: PlayerId,
+    player_id: u64,
     message_id: u32,
     touch_vec_x: f32,
     touch_vec_y: f32,
-    room_choice: u16,
     unused: [u8; 10]
 }
-
-// #[derive(Default)]
-// pub struct PacketOut {
-//     const_val: u16,
-//     packet_type: u16,
-//     seq_num: u32,
-//     // ball_x: f32,
-//     // ball_y: f32,
-//     // player_1_1_x: f32,
-//     // player_1_1_y: f32,
-//     // player_1_2_x: f32,
-//     // player_1_2_y: f32,
-//     // player_2_1_x: f32,
-//     // player_2_1_y: f32,
-//     // player_2_2_x: f32,
-//     // player_2_2_y: f32,
-//     // score1: u16,
-//     // score2: u16,
-//     // time: u16,
-//     // kicks_game_over_bool: u8,
-//     unused: [u8; 9],
-// }
-//
-// impl PacketOut {
-//     pub fn pong() -> PacketOut {
-//         let mut p: PacketOut = Default::default();
-//         p.packet_type = 1;
-//         p
-//     }
-//
-//     pub fn state(state: GameState) -> PacketOut {
-//         let mut p = PacketOut::default();
-//         p.packet_type = 2;
-//         p
-//     }
-// }
 
 pub fn to_bytes(gs: &GameState, seq_num: u32) -> [u8; PACKET_OUT_LEN] {
     let score1: u16 = 0;
@@ -157,23 +117,11 @@ pub fn handle_socket(state_sender: Sender<PlayersStateMessage>, socket: UdpSocke
                 let packet = decode_inbound_packet(len, &buf);
                 match packet {
                     Ok(p) => {
-                        if p.packet_type == GAME_TYPE_PONG {
-                            match state_sender.send(PlayersStateMessage::PingReceived(client_address, p.room_choice)) {
-                                Ok(_) => {}
-                                Err(e) => error!("Cannot send ping message, error: {}", e)
-                            };
-                        }
-                        else if p.packet_type == GAME_TYPE_STATE {
-                            let player_id = client_address;
-                            match state_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_socket: player_id, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
-                                Ok(val) => {}
-                                Err(err) => {
-                                    error!("Cannot send: {}", err);
-                                }
+                        match state_sender.send(PlayersStateMessage::PlayerInput(PlayerMessage { player_id: p.player_id, player_socket: client_address, input: PlayerInput { vec_x: p.touch_vec_x, vec_y: p.touch_vec_y } })) {
+                            Ok(val) => {}
+                            Err(err) => {
+                                error!("Cannot send: {}", err);
                             }
-                        }
-                        else {
-                            error!("Unknown packet type: {}", p.packet_type);
                         }
                     }
                     Err(e) => {
@@ -196,16 +144,14 @@ fn decode_inbound_packet(len: usize, bytes: &[u8; 32]) -> Result<PacketIn, Box<d
         return Err(Box::from("Wrong packet len"));
     }
 
-    // println!("{} bytes read, message: {:?}", len, bytes);
+    // debug!("{} bytes read, message: {:?}", len, bytes);
 
     let packet = PacketIn {
         const_val: u16::from_ne_bytes(bytes[0..2].try_into()?),
-        packet_type: u16::from_ne_bytes(bytes[2..4].try_into()?),
-        player_id: u32::from_ne_bytes(bytes[4..8].try_into()?),
-        message_id: u32::from_ne_bytes(bytes[8..12].try_into()?),
-        touch_vec_x: f32::from_ne_bytes(bytes[12..16].try_into()?),
-        touch_vec_y: f32::from_ne_bytes(bytes[16..20].try_into()?),
-        room_choice: u16::from_ne_bytes(bytes[20..22].try_into()?),
+        player_id: u64::from_ne_bytes(bytes[2..10].try_into()?),
+        message_id: u32::from_ne_bytes(bytes[10..14].try_into()?),
+        touch_vec_x: f32::from_ne_bytes(bytes[14..18].try_into()?),
+        touch_vec_y: f32::from_ne_bytes(bytes[18..22].try_into()?),
         unused: bytes[22..32].try_into()?,
     };
 
@@ -214,15 +160,4 @@ fn decode_inbound_packet(len: usize, bytes: &[u8; 32]) -> Result<PacketIn, Box<d
     }
 
     Ok(packet)
-}
-
-pub fn pong_message() -> [u8; PACKET_OUT_LEN]{
-    let mut bytes: [u8; PACKET_OUT_LEN] = [0; PACKET_OUT_LEN];
-
-    // out_packet[0..2].clone_from_slice(CONSTANT_VALUE.to_le_bytes().as_slice());
-    // out_packet[2..4].clone_from_slice(GAME_TYPE_STATE.to_le_bytes().as_slice());
-
-    bytes[0..2].clone_from_slice(&CONSTANT_VALUE.to_le_bytes());
-    bytes[2..4].clone_from_slice(&GAME_TYPE_PONG.to_le_bytes());
-    bytes
 }

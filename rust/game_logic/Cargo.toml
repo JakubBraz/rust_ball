@@ -8,6 +8,7 @@ rapier2d = { version = "0.19.0", features = ["enhanced-determinism"] }
 rand = "0.9.0-alpha.1"
 env_logger = "0.11.3"
 log = "0.4.21"
+tokio = { version = "1.38.0", features = ["net", "time", "rt", "io-util"] }
 
 [lib]
 name = "game_logic_lib"

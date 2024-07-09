@@ -38,9 +38,9 @@ func _process(delta):
 		var camera_angle = get_viewport().get_camera_3d().rotation[1]
 		var touch_vec = pos - start_touch
 		touch_vec = touch_vec.rotated(-camera_angle)
-		var len = min(MAX_TOUCH_LEN_SCREEN, touch_vec.length())
-		var normalized_touch = touch_vec.normalized() * (len / MAX_TOUCH_LEN_SCREEN)
-		$vector_container.scale = Vector3(len * TOUCH_SCALLING, 1, 1)
+		var vec_len = min(MAX_TOUCH_LEN_SCREEN, touch_vec.length())
+		var normalized_touch = touch_vec.normalized() * (vec_len / MAX_TOUCH_LEN_SCREEN)
+		$vector_container.scale = Vector3(vec_len * TOUCH_SCALLING, 1, 1)
 		#$vector_container.scale = Vector3(MAX_TOUCH_LEN_GAME, 1, 1)
 		$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
 		#$vector_container.rotation = Vector3(0, -touch_vec.angle(), 0)
@@ -64,12 +64,14 @@ func _process(delta):
 	var packets_read = 0
 	while len(p) > 0:
 		p = global_values.socket.get_packet()
-		var packet_type = p.decode_u16(2);
-		if packet_type == 1:
-			print("Pong received")
-		elif packet_type == 2:
-			packets_read += 1
-			prev_p = p
+		if len(p) > 2:
+			var packet_type = p.decode_u16(2);
+			#todo there is no ping-pong anymore, remove it
+			if packet_type == 1:
+				print("Pong received")
+			elif packet_type == 2:
+				packets_read += 1
+				prev_p = p
 
 	p = prev_p if packets_read >= 1 else []
 	if len(p) > 0:

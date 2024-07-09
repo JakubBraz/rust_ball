@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://tygolvn8xrgy"]
+[gd_scene load_steps=8 format=3 uid="uid://tygolvn8xrgy"]
 
 [ext_resource type="Script" path="res://main_scene.gd" id="1_6tetw"]
 [ext_resource type="Texture2D" uid="uid://bj3rfh3bcn74o" path="res://graphics/touch.png" id="2_6rela"]
+[ext_resource type="Script" path="res://TcpHandler.gd" id="3_odol5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nc2ix"]
+vertex_color_is_srgb = true
 albedo_color = Color(0.205201, 0.694447, 0.137036, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xwmn3"]
@@ -119,3 +121,6 @@ visible = false
 modulate = Color(1, 1, 1, 0.498039)
 scale = Vector2(0.25, 0.25)
 texture = ExtResource("2_6rela")
+
+[node name="TcpHandler" type="Node3D" parent="."]
+script = ExtResource("3_odol5")
