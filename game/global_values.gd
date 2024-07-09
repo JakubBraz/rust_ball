@@ -18,7 +18,8 @@ var packet_id = 0
 
 var room_id = 12123
 
-const IP_ADDR = "127.0.0.1"
+#const IP_ADDR = "127.0.0.1"
+const IP_ADDR = "20.215.53.164"
 const UDP_PORT = 8019
 const TCP_PORT = 8018
 
@@ -27,7 +28,7 @@ func _ready():
 	print("Game start!")
 	socket = PacketPeerUDP.new()
 	#socket.set_dest_address("127.0.0.1", 8019)
-	socket.set_dest_address("20.215.53.164", 8019)
+	socket.set_dest_address(IP_ADDR, 8019)
 	#socket.set_dest_address("172.27.181.206", 8019)
 	#socket.connect_to_host("127.0.0.1", 8019)
 
